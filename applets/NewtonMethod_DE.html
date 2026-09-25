@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Das Newton-Verfahren – JSXGraph</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            color: #222;
+            margin: 0;
+        }
+
+        #intro,
+        #board,
+        #info {
+            width: min(900px, calc(100vw - 32px));
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        #intro {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #intro h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        #explanation,
+        #info {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        #explanation p:first-child,
+        #info p:first-child {
+            margin-top: 0;
+        }
+
+        #explanation ol {
+            margin-bottom: 0;
+            padding-left: 24px;
+        }
+
+        #explanation li + li {
+            margin-top: 5px;
+        }
+
+        #board {
+            height: min(750px, 85vw);
+            min-height: 540px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+
+        #info {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        #info p:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-right: 14px;
+            white-space: nowrap;
+        }
+
+        .legend-line {
+            display: inline-block;
+            width: 24px;
+            border-top: 2px solid;
+        }
+
+        .legend-line.blue {
+            border-color: #2166ac;
+        }
+
+        .legend-line.green {
+            border-color: #1b9e77;
+        }
+
+        .legend-line.grey {
+            border-color: #777;
+            border-top-style: dashed;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #e66101;
+        }
+
+        .iteration-table {
+            width: 100%;
+            max-width: 480px;
+            margin-top: 8px;
+            border-collapse: collapse;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .iteration-table th,
+        .iteration-table td {
+            padding: 3px 10px 3px 0;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .iteration-table th:first-child,
+        .iteration-table td:first-child {
+            width: 45px;
+            text-align: center;
+        }
+
+        #statusMessage {
+            margin-bottom: 0;
+        }
+
+        .JXGtext,
+        .JXGinput,
+        .JXGbutton {
+            font-family: sans-serif !important;
+        }
+
+        @media (max-width: 650px) {
+            #board {
+                height: 560px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro">
+        <h2>Das Newton-Verfahren</h2>
+
+        <div id="explanation">
+            <p>
+                Mit dem Newton-Verfahren werden Nullstellen einer
+                differenzierbaren Funktion \(f\) näherungsweise bestimmt.
+                Ausgehend von \(x_k\) wird die Tangente im Punkt
+                \((x_k,f(x_k))\) betrachtet. Ihr Schnittpunkt mit der
+                \(x\)-Achse liefert die nächste Näherung:
+                \[
+                    x_{k+1}=x_k-\frac{f(x_k)}{f'(x_k)}.
+                \]
+            </p>
+
+            <p>
+                Gib eine Funktion \(f(x)\) ein, wähle die Anzahl der Schritte
+                \(n\) und verschiebe den Startwert \(x_0\) auf der
+                \(x\)-Achse. Die Konstruktion und die Iterationswerte werden
+                automatisch aktualisiert.
+            </p>
+
+            <p><strong>Untersuche:</strong></p>
+
+            <ol>
+                <li>
+                    Starte mit \(f(x)=x^2-2\). Erhöhe \(n\) schrittweise und
+                    beschreibe, wie aus \(x_k\) der Wert \(x_{k+1}\) entsteht.
+                </li>
+                <li>
+                    Vergleiche positive und negative Startwerte. Welche
+                    Nullstelle wird jeweils angenähert?
+                </li>
+                <li>
+                    Verschiebe \(x_0\) in die Nähe einer Stelle, an der die
+                    Tangente fast horizontal ist. Was geschieht mit dem
+                    nächsten Newton-Schritt?
+                </li>
+                <li>
+                    Untersuche \(f(x)=x^3-2x+2\) mit \(x_0=0\). Konvergiert
+                    die Folge?
+                </li>
+                <li>
+                    Formuliere eine Vermutung dazu, weshalb das
+                    Newton-Verfahren nicht für jeden Startwert konvergieren
+                    muss.
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="board"
+         class="jxgbox"
+         aria-label="Interaktive Darstellung des Newton-Verfahrens"></div>
+
+    <div id="info">
+        <p>
+            <strong>Aktuelle Iteration</strong><br>
+            Gewählte Anzahl Schritte:
+            \(n=\)<span id="requestedSteps">1</span><br>
+            Ausgeführte Schritte:
+            <span id="completedSteps">0</span><br>
+            Letzte Näherung:
+            <span id="lastApproximation">–</span><br>
+            Betrag des Funktionswerts:
+            <span id="lastResidual">–</span>
+        </p>
+
+        <p>
+            <span class="legend">
+                <span class="legend-line blue"></span>
+                Graph von \(f\)
+            </span>
+            <span class="legend">
+                <span class="legend-line grey"></span>
+                Weg zum Graphen
+            </span>
+            <span class="legend">
+                <span class="legend-line green"></span>
+                Tangentenschritt
+            </span>
+            <span class="legend">
+                <span class="legend-dot"></span>
+                Näherungen auf der \(x\)-Achse
+            </span>
+        </p>
+
+        <table class="iteration-table">
+            <thead>
+                <tr>
+                    <th>\(k\)</th>
+                    <th>\(x_k\)</th>
+                    <th>\(f(x_k)\)</th>
+                </tr>
+            </thead>
+            <tbody id="iterationRows"></tbody>
+        </table>
+
+        <p id="statusMessage"></p>
+    </div>
+
+    <script>
+        'use strict';
+
+        JXG.Options.text.useMathJax = true;
+
+        const board = JXG.JSXGraph.initBoard('board', {
+            boundingbox: [-6, 7, 6, -3],
+            axis: true,
+            keepaspectratio: true,
+            showCopyright: false,
+            showNavigation: false
+        });
+
+        const signature = board.create('text', [
+            function () {
+                return board.getBoundingBox()[0] + 0.12;
+            },
+            function () {
+                return board.getBoundingBox()[3] + 0.12;
+            },
+            '© 2026 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            highlight: false,
+            strokeColor: '#666',
+            opacity: 0.6,
+            layer: 10
+        });
+
+        const controlPanel = board.create('polygon', [
+            [-5.75, 6.7],
+            [3.0, 6.7],
+            [3.0, 4.65],
+            [-5.75, 4.65]
+        ], {
+            fillColor: '#fff',
+            fillOpacity: 0.94,
+            vertices: {
+                visible: false
+            },
+            borders: {
+                strokeColor: '#ccc',
+                highlight: false
+            },
+            fixed: true,
+            highlight: false,
+            layer: 7
+        });
+
+        const functionLabel = board.create('text', [
+            -5.45,
+            6.25,
+            '\\(f(x)=\\)'
+        ], {
+            fixed: true,
+            frozen: true,
+            highlight: false,
+            anchorX: 'left'
+        });
+
+        const functionInput = board.create('input', [
+            -4.55,
+            6.25,
+            'x^2-2',
+            ''
+        ], {
+            cssStyle: 'width: 165px;',
+            frozen: true,
+            anchorX: 'left'
+        });
+
+        const updateButton = board.create('button', [
+            -1.45,
+            6.25,
+            'Funktion aktualisieren',
+            function () {
+                updateAll();
+            }
+        ], {
+            cssStyle: 'padding: 4px;',
+            frozen: true,
+            anchorX: 'left'
+        });
+
+        const iterationSlider = board.create('slider', [
+            [-5.45, 5.15],
+            [-1.45, 5.15],
+            [1, 1, 8]
+        ], {
+            name: '\\(n\\)',
+            snapWidth: 1,
+            digits: 0,
+            frozen: true,
+            anchorX: 'left'
+        });
+
+        const zeroStartButton = board.create('button', [
+            0.55,
+            5.15,
+            'Startwert 0',
+            function () {
+                x0.moveTo([0, 0]);
+                buildNewton();
+            }
+        ], {
+            cssStyle: 'padding: 4px;',
+            frozen: true,
+            anchorX: 'left'
+        });
+
+        const gliderDomain = board.create('segment', [
+            [-4.5, 0],
+            [4.5, 0]
+        ], {
+            visible: false,
+            fixed: true
+        });
+
+        const x0 = board.create('glider', [
+            2.5,
+            0,
+            gliderDomain
+        ], {
+            name: '\\(x_0\\)',
+            size: 4,
+            strokeColor: '#222',
+            fillColor: '#fff',
+            snapSizeX: 0.1,
+            showInfobox: false,
+            label: {
+                offset: [0, 14]
+            },
+            layer: 9
+        });
+
+        let f = null;
+        let df = null;
+        let functionGraph = null;
+        let newtonObjects = [];
+
+        const requestedSteps = document.getElementById('requestedSteps');
+        const completedSteps = document.getElementById('completedSteps');
+        const lastApproximation =
+            document.getElementById('lastApproximation');
+        const lastResidual = document.getElementById('lastResidual');
+        const iterationRows = document.getElementById('iterationRows');
+        const statusMessage = document.getElementById('statusMessage');
+
+        function parseAndPlotFunction() {
+            const expression = functionInput.Value();
+            let parsedFunction;
+
+            try {
+                parsedFunction =
+                    board.jc.snippet(expression, true, 'x', false);
+
+                const testValue = parsedFunction(x0.X());
+                if (!Number.isFinite(testValue)) {
+                    throw new Error('Invalid function value');
+                }
+            } catch (error) {
+                window.alert(
+                    'Die Funktion konnte nicht gelesen werden. ' +
+                    'Prüfe die Eingabe und verwende x als Variable.'
+                );
+                return false;
+            }
+
+            f = parsedFunction;
+            df = JXG.Math.Numerics.D(f);
+
+            if (functionGraph) {
+                board.removeObject(functionGraph);
+            }
+
+            functionGraph = board.create('functiongraph', [
+                f,
+                -5.8,
+                5.8
+            ], {
+                strokeColor: '#2166ac',
+                strokeWidth: 2.5,
+                fixed: true,
+                highlight: false,
+                layer: 5
+            });
+
+            return true;
+        }
+
+        function clearNewtonObjects() {
+            for (let i = newtonObjects.length - 1; i >= 0; i--) {
+                board.removeObject(newtonObjects[i]);
+            }
+            newtonObjects = [];
+        }
+
+        function addObject(object) {
+            newtonObjects.push(object);
+            return object;
+        }
+
+        function addApproximationPoint(x, size) {
+            return addObject(board.create('point', [
+                x,
+                0
+            ], {
+                name: '',
+                size: size,
+                strokeColor: '#e66101',
+                fillColor: '#e66101',
+                fixed: true,
+                highlight: false,
+                showInfobox: false,
+                layer: 9
+            }));
+        }
+
+        function drawNewtonStep(x, y, xNext, k) {
+            const curvePoint = addObject(board.create('point', [
+                x,
+                y
+            ], {
+                name: k < 3 ? '\\(P_{' + k + '}\\)' : '',
+                size: 3,
+                strokeColor: '#2166ac',
+                fillColor: '#2166ac',
+                fixed: true,
+                highlight: false,
+                showInfobox: false,
+                label: {
+                    offset: [7, 8]
+                },
+                layer: 6
+            }));
+
+            addObject(board.create('segment', [
+                [x, 0],
+                curvePoint
+            ], {
+                strokeColor: '#777',
+                strokeWidth: 1.5,
+                dash: 2,
+                fixed: true,
+                highlight: false,
+                layer: 4
+            }));
+
+            addObject(board.create('segment', [
+                curvePoint,
+                [xNext, 0]
+            ], {
+                strokeColor: '#1b9e77',
+                strokeWidth: 2.5,
+                fixed: true,
+                highlight: false,
+                layer: 6
+            }));
+
+            addApproximationPoint(xNext, 2.5);
+        }
+
+        function appendIterationRow(k, x, y) {
+            const row = document.createElement('tr');
+            const kCell = document.createElement('td');
+            const xCell = document.createElement('td');
+            const yCell = document.createElement('td');
+
+            kCell.textContent = String(k);
+            xCell.textContent =
+                Number.isFinite(x) ? x.toFixed(6) : '–';
+            yCell.textContent =
+                Number.isFinite(y) ? y.toExponential(3) : '–';
+
+            row.appendChild(kCell);
+            row.appendChild(xCell);
+            row.appendChild(yCell);
+            iterationRows.appendChild(row);
+        }
+
+        function buildNewton() {
+            if (!f || !df) {
+                if (!parseAndPlotFunction()) {
+                    return;
+                }
+            }
+
+            clearNewtonObjects();
+            iterationRows.innerHTML = '';
+
+            const requested = Math.round(iterationSlider.Value());
+            const values = [x0.X()];
+            const functionValues = [f(values[0])];
+            const derivativeTolerance = 1e-8;
+            const rootTolerance = 1e-7;
+            const cycleTolerance = 1e-6;
+            const divergenceLimit = 1e4;
+
+            let status = 'completed';
+
+            for (let k = 0; k < requested; k++) {
+                const x = values[values.length - 1];
+                const y = f(x);
+                const derivative = df(x);
+
+                functionValues[functionValues.length - 1] = y;
+
+                if (!Number.isFinite(y) ||
+                    !Number.isFinite(derivative)) {
+                    status = 'undefined';
+                    break;
+                }
+
+                if (Math.abs(y) < rootTolerance) {
+                    status = 'converged';
+                    break;
+                }
+
+                if (Math.abs(derivative) < derivativeTolerance) {
+                    status = 'flat';
+                    break;
+                }
+
+                const xNext = x - y / derivative;
+
+                if (!Number.isFinite(xNext) ||
+                    Math.abs(xNext) > divergenceLimit) {
+                    status = 'diverged';
+                    break;
+                }
+
+                drawNewtonStep(x, y, xNext, k);
+
+                let repeatedIndex = -1;
+                for (let j = 0; j < values.length; j++) {
+                    if (Math.abs(values[j] - xNext) < cycleTolerance) {
+                        repeatedIndex = j;
+                        break;
+                    }
+                }
+
+                values.push(xNext);
+                functionValues.push(f(xNext));
+
+                if (repeatedIndex >= 0 &&
+                    Math.abs(f(xNext)) >= rootTolerance) {
+                    status = 'cycle';
+                    break;
+                }
+            }
+
+            const lastX = values[values.length - 1];
+            const lastY = f(lastX);
+
+            if (status === 'completed' &&
+                Number.isFinite(lastY) &&
+                Math.abs(lastY) < rootTolerance) {
+                status = 'converged';
+            }
+
+            if (values.length > 1 &&
+                Number.isFinite(lastY)) {
+                const finalPoint = addObject(board.create('point', [
+                    lastX,
+                    lastY
+                ], {
+                    name: '',
+                    size: 3,
+                    strokeColor: '#e66101',
+                    fillColor: '#e66101',
+                    fixed: true,
+                    highlight: false,
+                    showInfobox: false,
+                    layer: 6
+                }));
+
+                addObject(board.create('segment', [
+                    [lastX, 0],
+                    finalPoint
+                ], {
+                    strokeColor: '#777',
+                    strokeWidth: 1.5,
+                    dash: 2,
+                    fixed: true,
+                    highlight: false,
+                    layer: 4
+                }));
+            }
+
+            for (let k = 0; k < values.length; k++) {
+                appendIterationRow(
+                    k,
+                    values[k],
+                    functionValues[k]
+                );
+            }
+
+            requestedSteps.textContent = String(requested);
+            completedSteps.textContent =
+                String(values.length - 1);
+            lastApproximation.textContent =
+                Number.isFinite(lastX) ? lastX.toFixed(8) : '–';
+            lastResidual.textContent =
+                Number.isFinite(lastY) ?
+                    Math.abs(lastY).toExponential(3) : '–';
+
+            if (status === 'converged') {
+                statusMessage.textContent =
+                    'Die Folge hat eine Nullstelle mit der verwendeten ' +
+                    'Genauigkeit erreicht.';
+            } else if (status === 'flat') {
+                statusMessage.textContent =
+                    'Abbruch: Die Tangente ist nahezu horizontal. ' +
+                    'Der nächste Newton-Schritt ist nicht zuverlässig ' +
+                    'definiert.';
+            } else if (status === 'cycle') {
+                statusMessage.textContent =
+                    'Es wurde ein Zyklus erkannt: Ein bereits besuchter ' +
+                    'Näherungswert tritt erneut auf.';
+            } else if (status === 'diverged') {
+                statusMessage.textContent =
+                    'Abbruch: Der nächste Näherungswert liegt ausserhalb ' +
+                    'des sinnvollen Darstellungsbereichs.';
+            } else if (status === 'undefined') {
+                statusMessage.textContent =
+                    'Abbruch: Funktion oder Ableitung ist an einer ' +
+                    'benötigten Stelle nicht definiert.';
+            } else {
+                statusMessage.textContent =
+                    'Die gewählte Anzahl Newton-Schritte wurde ausgeführt.';
+            }
+
+            board.update();
+        }
+
+        function updateAll() {
+            if (parseAndPlotFunction()) {
+                buildNewton();
+            }
+        }
+
+        iterationSlider.on('drag', buildNewton);
+        iterationSlider.on('up', buildNewton);
+        x0.on('drag', buildNewton);
+        x0.on('up', buildNewton);
+
+        JXG.addEvent(
+            functionInput.rendNodeInput,
+            'keydown',
+            function (event) {
+                if (event.key === 'Enter') {
+                    updateAll();
+                }
+            },
+            functionInput
+        );
+
+        updateAll();
+    </script>
+</body>
+
+</html>

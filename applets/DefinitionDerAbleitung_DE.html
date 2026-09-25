@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Definition der Ableitung – JSXGraph</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            color: #222;
+        }
+
+        #intro,
+        #jxgbox {
+            width: min(900px, calc(100vw - 32px));
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #intro {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #intro h2 {
+            margin-bottom: 8px;
+        }
+
+        #explanation {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        #explanation ol {
+            margin-bottom: 0;
+        }
+
+        #jxgbox {
+            height: min(550px, 67vw);
+            min-height: 420px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+
+        .JXGtext,
+        .JXGinput,
+        .JXGbutton {
+            font-family: sans-serif !important;
+        }
+
+        @media (max-width: 650px) {
+            #jxgbox {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro">
+        <h2>Die Definition der Ableitung</h2>
+
+        <div id="explanation">
+            <p>
+                In dieser Ansicht kannst du untersuchen, wie aus einer <strong>Sekante</strong>
+                schrittweise die <strong>Tangente</strong> im Punkt
+                \(A=(x_0,f(x_0))\) entsteht.
+            </p>
+
+            <p>
+                Gib zuerst eine Funktion \(f(x)\) im Eingabefeld oben links ein.
+                Verschiebe danach die Punkte \(x_0\) und \(x_1\) auf der x-Achse.
+            </p>
+
+            <p><strong>Untersuche:</strong></p>
+            <ol>
+                <li>Wie verändern sich \(\Delta x\), \(\Delta f\) und die Steigung der Sekante?</li>
+                <li>Nähere \(x_1\) von beiden Seiten an \(x_0\) an. Was beobachtest du?</li>
+                <li>Vergleiche die Steigung der Sekante mit der Steigung der Tangente.</li>
+                <li>Formuliere eine Vermutung für die Definition von \(f'(x_0)\) und blende danach die Definition ein.</li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="jxgbox" class="jxgbox" aria-label="Interaktive Darstellung zur Definition der Ableitung"></div>
+
+    <script>
+        JXG.Options.text.useMathJax = true;
+
+        const COLORS = {
+            function: '#1558d6',
+            secant: '#8a3ffc',
+            tangent: '#087830',
+            deltaX: '#222222',
+            deltaF: '#e4571e',
+            point: '#d41473',
+            guide: '#666666'
+        };
+
+        const board = JXG.JSXGraph.initBoard('jxgbox', {
+            boundingbox: [-8, 6.5, 10, -4.5],
+            axis: true,
+            showNavigation: true,
+            showCopyright: false,
+            keepAspectRatio: false,
+            pan: { enabled: true },
+            zoom: { wheel: true, needShift: true }
+        });
+
+        // Creative Commons signature (watermark)
+        board.create('text', [
+            function () {
+                const bb = board.getBoundingBox();
+                return bb[0] + 0.01 * (bb[2] - bb[0]);
+            },
+            function () {
+                const bb = board.getBoundingBox();
+                return bb[3] + 0.01 * (bb[1] - bb[3]);
+            },
+            '© 2026 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            strokeColor: '#666',
+            opacity: 0.6,
+            highlight: false
+        });
+
+        let functionExpression = '0.1*x^2+1';
+        let f = null;
+        let df = null;
+        let functionGraph = null;
+        let inputError = '';
+
+        function functionValue(x) {
+            if (!f) return NaN;
+            try {
+                const y = f(x);
+                return Number.isFinite(y) ? y : NaN;
+            } catch (error) {
+                return NaN;
+            }
+        }
+
+        function derivativeValue(x) {
+            if (!df) return NaN;
+            try {
+                const y = df(x);
+                return Number.isFinite(y) ? y : NaN;
+            } catch (error) {
+                return NaN;
+            }
+        }
+
+        function deltaX() {
+            return x1Point.X() - x0Point.X();
+        }
+
+        function deltaF() {
+            return functionValue(x1Point.X()) - functionValue(x0Point.X());
+        }
+
+        function secantSlope() {
+            const dx = deltaX();
+            if (Math.abs(dx) < 1e-6) return NaN;
+            return deltaF() / dx;
+        }
+
+        function formatNumber(value, digits = 3) {
+            if (!Number.isFinite(value)) return '\u2013';
+            const rounded = Number(value.toFixed(digits));
+            return Object.is(rounded, -0) ? '0' : rounded.toString();
+        }
+
+        // Input and display controls are JSXGraph elements placed on the board.
+        const inputF = board.create('input', [-7.55, 6.0, functionExpression, '\\(f(x)=\\) '], {
+            cssStyle: 'width:120px;',
+            frozen: true,
+            fixed: true
+        });
+
+        // Initialise the function before creating dependent dynamic objects.
+        f = board.jc.snippet(functionExpression, true, 'x', false);
+        df = JXG.Math.Numerics.D(f);
+
+        const tangentCheckbox = board.create('checkbox', [-7.55, 5.22, 'Tangente anzeigen'], {
+            checked: true,
+            fixed: true,
+            frozen: true,
+            strokeColor: COLORS.tangent
+        });
+
+        const definitionCheckbox = board.create('checkbox', [-7.55, 4.55, 'Definition anzeigen'], {
+            checked: false,
+            fixed: true,
+            frozen: true,
+            strokeColor: '#333333'
+        });
+
+        const x0Point = board.create('glider', [2, 0, board.defaultAxes.x], {
+            name: '\\(x_0\\)',
+            size: 4,
+            strokeColor: '#444444',
+            fillColor: 'white',
+            label: { offset: [-8, -24] }
+        });
+
+        const x1Point = board.create('glider', [5, 0, board.defaultAxes.x], {
+            name: '\\(x_1\\)',
+            size: 4,
+            strokeColor: '#444444',
+            fillColor: 'white',
+            label: { offset: [-8, -24] }
+        });
+
+        const pointA = board.create('point', [
+            () => x0Point.X(),
+            () => functionValue(x0Point.X())
+        ], {
+            name: '\\(A\\)',
+            size: 4,
+            strokeColor: COLORS.point,
+            fillColor: COLORS.point,
+            fixed: true,
+            label: { offset: [-18, 12] }
+        });
+
+        const pointB = board.create('point', [
+            () => x1Point.X(),
+            () => functionValue(x1Point.X())
+        ], {
+            name: '\\(B\\)',
+            size: 4,
+            strokeColor: COLORS.point,
+            fillColor: COLORS.point,
+            fixed: true,
+            label: { offset: [9, 12] }
+        });
+
+        // Projections of A and B to the x-axis.
+        board.create('segment', [x0Point, pointA], {
+            strokeColor: COLORS.guide,
+            strokeWidth: 1.5,
+            dash: 2,
+            fixed: true,
+            highlight: false
+        });
+
+        board.create('segment', [x1Point, pointB], {
+            strokeColor: COLORS.guide,
+            strokeWidth: 1.5,
+            dash: 2,
+            fixed: true,
+            highlight: false
+        });
+
+        // Secant through A and B.
+        const secant = board.create('line', [pointA, pointB], {
+            name: '',
+            strokeColor: COLORS.secant,
+            strokeWidth: 2.5,
+            fixed: true,
+            highlight: false,
+            visible: () => Math.abs(deltaX()) >= 1e-6
+        });
+
+        // A second dynamic point determines the tangent direction at A.
+        const tangentDirection = board.create('point', [
+            () => x0Point.X() + 1,
+            () => functionValue(x0Point.X()) + derivativeValue(x0Point.X())
+        ], {
+            visible: false,
+            fixed: true
+        });
+
+        board.create('line', [pointA, tangentDirection], {
+            name: '',
+            strokeColor: COLORS.tangent,
+            strokeWidth: 2.5,
+            dash: 2,
+            fixed: true,
+            highlight: false,
+            visible: () => tangentCheckbox.Value() && Number.isFinite(derivativeValue(x0Point.X()))
+        });
+
+        // Slope triangle: horizontal change Delta x followed by vertical change Delta f.
+        const corner = board.create('point', [
+            () => x1Point.X(),
+            () => functionValue(x0Point.X())
+        ], {
+            visible: false,
+            fixed: true
+        });
+
+        board.create('segment', [pointA, corner], {
+            strokeColor: COLORS.deltaX,
+            strokeWidth: 3,
+            fixed: true,
+            highlight: false,
+            visible: () => Math.abs(deltaX()) >= 1e-6
+        });
+
+        board.create('segment', [corner, pointB], {
+            strokeColor: COLORS.deltaF,
+            strokeWidth: 4,
+            fixed: true,
+            highlight: false,
+            visible: () => Math.abs(deltaX()) >= 1e-6
+        });
+
+        board.create('text', [
+            () => (x0Point.X() + x1Point.X()) / 2,
+            () => functionValue(x0Point.X()) - 0.30,
+            '\\(\\Delta x\\)'
+        ], {
+            anchorX: 'middle',
+            anchorY: 'top',
+            strokeColor: COLORS.deltaX,
+            fixed: true,
+            visible: () => Math.abs(deltaX()) >= 0.35
+        });
+
+        board.create('text', [
+            () => x1Point.X() + 0.20,
+            () => (functionValue(x0Point.X()) + functionValue(x1Point.X())) / 2,
+            '\\(\\Delta f\\)'
+        ], {
+            anchorX: 'left',
+            anchorY: 'middle',
+            strokeColor: COLORS.deltaF,
+            fixed: true,
+            visible: () => Math.abs(deltaF()) >= 0.25 && Math.abs(deltaX()) >= 1e-6
+        });
+
+        // Live numerical information.
+        board.create('text', [-7.55, 3.68, () => {
+            if (inputError) return '<span style="color:#b00020">' + inputError + '</span>';
+            return '\\(x_0=' + formatNumber(x0Point.X(), 2) +
+                ',\\quad x_1=' + formatNumber(x1Point.X(), 2) + '\\)';
+        }], {
+            fixed: true,
+            frozen: true,
+            anchorX: 'left',
+            anchorY: 'top'
+        });
+
+        board.create('text', [-7.55, 3.05, () => {
+            if (inputError) return '';
+            return '\\(\\Delta x=x_1-x_0=' + formatNumber(deltaX()) + '\\)';
+        }], {
+            fixed: true,
+            frozen: true,
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: COLORS.deltaX
+        });
+
+        board.create('text', [-7.55, 2.43, () => {
+            if (inputError) return '';
+            return '\\(\\Delta f=f(x_1)-f(x_0)=' + formatNumber(deltaF()) + '\\)';
+        }], {
+            fixed: true,
+            frozen: true,
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: COLORS.deltaF
+        });
+
+        board.create('text', [-7.55, 1.90, () => {
+            if (inputError) return '';
+            if (Math.abs(deltaX()) < 1e-6) {
+                return '<span style="color:' + COLORS.secant + '">Für \\(x_1=x_0\\) ist der<br>Differenzenquotient nicht definiert.</span>';
+            }
+            return '<span style="color:' + COLORS.secant + '">Steigung der Sekante:<br>' +
+                '\\(m_{\\mathrm{Sek}}=\\dfrac{\\Delta f}{\\Delta x}=' +
+                formatNumber(secantSlope()) + '\\)</span>';
+        }], {
+            fixed: true,
+            frozen: true,
+            anchorX: 'left',
+            anchorY: 'top'
+        });
+
+        board.create('text', [-7.55, 0.85, () => {
+            if (!tangentCheckbox.Value() || inputError) return '';
+            return '<span style="color:' + COLORS.tangent + '">Steigung der Tangente:<br>' +
+                '\\(m_{\\mathrm{Tan}}=f^{\\prime}(x_0)=' + formatNumber(derivativeValue(x0Point.X())) + '\\)</span>';
+        }], {
+            fixed: true,
+            frozen: true,
+            anchorX: 'left',
+            anchorY: 'top'
+        });
+
+        board.create('text', [-0.2, 6.05, () => {
+            if (!definitionCheckbox.Value() || inputError) return '';
+            return '<div style="padding:8px 11px;background:rgba(255,255,255,.92);border:1px solid #aaa;border-radius:5px">' +
+                '<strong>Definition:</strong>&nbsp; ' +
+                '\\(f^{\\prime}(x_0)=\\displaystyle\\lim_{x_1\\to x_0}' +
+                '\\frac{f(x_1)-f(x_0)}{x_1-x_0}\\)' +
+                '</div>';
+        }], {
+            fixed: true,
+            frozen: true,
+            anchorX: 'left',
+            anchorY: 'top'
+        });
+
+        function parseAndPlotFunction() {
+            const expression = inputF.Value().trim();
+            let parsedFunction;
+
+            try {
+                parsedFunction = board.jc.snippet(expression, true, 'x', false);
+                const testValues = [-1, 0, 1].map(parsedFunction);
+                if (!testValues.some(Number.isFinite)) throw new Error('No finite values');
+            } catch (error) {
+                inputError = 'Die Funktion konnte nicht gelesen werden.';
+                board.update();
+                return false;
+            }
+
+            functionExpression = expression;
+            f = parsedFunction;
+            df = JXG.Math.Numerics.D(f);
+            inputError = '';
+
+            if (functionGraph) board.removeObject(functionGraph);
+            functionGraph = board.create('functiongraph', [
+                x => functionValue(x)
+            ], {
+                name: '\\(f\\)',
+                withLabel: true,
+                strokeColor: COLORS.function,
+                strokeWidth: 2.5,
+                highlight: false,
+                label: { position: 'rt' }
+            });
+
+            board.update();
+            return true;
+        }
+
+        inputF.on('up', parseAndPlotFunction);
+
+        if (inputF.rendNodeInput) {
+            inputF.rendNodeInput.setAttribute('aria-label', 'Funktion f von x');
+            inputF.rendNodeInput.addEventListener('keydown', event => {
+                if (event.key === 'Enter') parseAndPlotFunction();
+            });
+            inputF.rendNodeInput.addEventListener('blur', parseAndPlotFunction);
+        }
+
+        tangentCheckbox.on('change', () => board.update());
+        definitionCheckbox.on('change', () => board.update());
+
+        parseAndPlotFunction();
+    </script>
+</body>
+
+</html>

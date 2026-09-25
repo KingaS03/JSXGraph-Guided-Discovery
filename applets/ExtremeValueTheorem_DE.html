@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Extremwertsatz – Interaktive Übung mit JSXGraph</title>
+
+<!-- =========================================================
+     MathJax
+     ========================================================= -->
+
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+    },
+    svg: {
+        fontCache: 'global'
+    }
+};
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+
+<!-- =========================================================
+     JSXGraph
+     ========================================================= -->
+
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+
+<script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+
+<style>
+
+body {
+    font-family: sans-serif;
+    color: #222;
+    margin: 0;
+}
+
+#intro,
+#jxgbox,
+#info {
+    width: min(900px, calc(100vw - 32px));
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+
+#intro {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+#intro h2 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+#explanation,
+#info {
+    padding: 12px 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #f9f9f9;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+#explanation p:first-child,
+#info p:first-child {
+    margin-top: 0;
+}
+
+#explanation ol {
+    margin-bottom: 0;
+    padding-left: 24px;
+}
+
+#explanation li + li {
+    margin-top: 5px;
+}
+
+#jxgbox {
+    height: min(550px, 67vw);
+    min-height: 430px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+}
+
+#info {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.JXGtext,
+.JXGinput,
+.JXGbutton {
+    font-family: sans-serif !important;
+}
+
+@media (max-width: 650px) {
+    #jxgbox {
+        height: 500px;
+    }
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div id="intro">
+    <h2>Der Extremwertsatz</h2>
+
+    <div id="explanation">
+        <p>
+            In dieser Ansicht kannst du experimentell untersuchen, unter welchen
+            Voraussetzungen eine stetige Funktion auf einem Intervall globale
+            Extremwerte besitzt.
+        </p>
+
+        <p>
+            Wähle eine Funktion, verschiebe die Intervallgrenzen \(a\) und \(b\)
+            direkt auf der \(x\)-Achse und schalte zwischen dem abgeschlossenen
+            Intervall \([a,b]\) und dem offenen Intervall \((a,b)\) um.
+        </p>
+
+        <p><strong>Untersuche:</strong></p>
+
+        <ol>
+            <li>
+                Wo liegen für \(f(x)=x\) auf \([a,b]\) das globale Minimum
+                und das globale Maximum?
+            </li>
+            <li>
+                Was verändert sich für \(f(x)=x\), wenn das Intervall offen ist?
+            </li>
+            <li>
+                Können die globalen Extremwerte von
+                \(f(x)=\frac{(x-1)(x+2)(x-2)}{8}\) im Inneren des Intervalls liegen?
+            </li>
+            <li>
+                Finde für \(f(x)=|x-1|\) ein offenes Intervall, auf dem trotzdem
+                ein globales Minimum existiert. Widerspricht das dem Extremwertsatz?
+            </li>
+            <li>
+                Formuliere den Extremwertsatz mit eigenen Worten und nenne seine
+                entscheidenden Voraussetzungen.
+            </li>
+        </ol>
+    </div>
+</div>
+
+
+<div id="jxgbox"
+     class="jxgbox"
+     aria-label="Interaktive Darstellung zum Extremwertsatz">
+</div>
+
+
+<div id="info"></div>
+
+
+
+<script>
+
+
+/* =========================================================
+   MathJax in JSXGraph
+   ========================================================= */
+
+JXG.Options.text.useMathJax = true;
+
+
+
+/* =========================================================
+   Board
+   ========================================================= */
+
+const board = JXG.JSXGraph.initBoard('jxgbox', {
+
+    boundingbox: [-6, 5, 6, -5],
+
+    axis: true,
+
+    showCopyright: false,
+    showNavigation: false
+
+});
+
+
+
+/* =========================================================
+   Creative Commons signature
+   ========================================================= */
+
+const CCsignature = board.create('text', [
+
+    function () {
+        return board.getBoundingBox()[0] + 0.15;
+    },
+
+    function () {
+        return board.getBoundingBox()[3] + 0.15;
+    },
+
+    '© 2026 Kinga Sipos • CC BY-SA 4.0'
+
+], {
+
+    fontSize: 10,
+
+    anchorX: 'left',
+    anchorY: 'bottom',
+
+    fixed: true,
+    highlight: false,
+
+    strokeColor: '#666',
+    opacity: 0.6,
+
+    layer: 10
+
+});
+
+
+
+/* =========================================================
+   Aktuelle Funktion
+   ========================================================= */
+
+let currentFuncId = 'linear';
+
+
+
+function f(x) {
+
+    switch (currentFuncId) {
+
+        case 'linear':
+
+            return x;
+
+
+        case 'cubic':
+
+            return ((x - 1) * (x + 2) * (x - 2)) / 8;
+
+
+        case 'abs':
+
+            return Math.abs(x - 1);
+
+
+        default:
+
+            return x;
+    }
+}
+
+
+
+/* =========================================================
+   Kritische Stellen
+
+   Sie werden für die exakte Bestimmung der globalen
+   Extremwerte der drei gegebenen Funktionen verwendet.
+   ========================================================= */
+
+function criticalPoints() {
+
+    switch (currentFuncId) {
+
+        case 'linear':
+
+            return [];
+
+
+        case 'cubic':
+
+            /*
+             f(x) = (x-1)(x+2)(x-2)/8
+
+             f'(x)=0 liefert:
+
+             x = (1 ± sqrt(13))/3
+            */
+
+            return [
+                (1 - Math.sqrt(13)) / 3,
+                (1 + Math.sqrt(13)) / 3
+            ];
+
+
+        case 'abs':
+
+            // Spitze von |x-1|
+
+            return [1];
+
+
+        default:
+
+            return [];
+    }
+}
+
+
+
+/* =========================================================
+   Funktionsbeschreibung
+   ========================================================= */
+
+function describeFunction(id) {
+
+    switch (id) {
+
+        case 'linear':
+
+            return '$f(x)=x$';
+
+
+        case 'cubic':
+
+            return '$f(x)=\\dfrac{(x-1)(x+2)(x-2)}{8}$';
+
+
+        case 'abs':
+
+            return '$f(x)=|x-1|$';
+
+
+        default:
+
+            return '';
+    }
+}
+
+
+
+/* =========================================================
+   JSXGraph-Steuerung oben links
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   Überschrift
+   --------------------------------------------------------- */
+
+const functionLabel = board.create('text', [
+
+    -5.75,
+    4.65,
+    'Funktion $f(x)$:'
+
+], {
+
+    fixed: true,
+    highlight: false,
+
+    fontSize: 14,
+
+    layer: 10
+
+});
+
+
+
+/* ---------------------------------------------------------
+   Funktion f(x)=x
+   --------------------------------------------------------- */
+
+const buttonLinear = board.create('button', [
+
+    -5.75,
+    4.15,
+
+    'x',
+
+    function () {
+
+        currentFuncId = 'linear';
+
+        updateScene();
+
+    }
+
+], {
+
+    fixed: true
+
+});
+
+
+
+/* ---------------------------------------------------------
+   Kubische Funktion
+   --------------------------------------------------------- */
+
+const buttonCubic = board.create('button', [
+
+    -5.0,
+    4.15,
+
+    '(x−1)(x+2)(x−2)/8',
+
+    function () {
+
+        currentFuncId = 'cubic';
+
+        updateScene();
+
+    }
+
+], {
+
+    fixed: true
+
+});
+
+
+
+/* ---------------------------------------------------------
+   Betragsfunktion
+   --------------------------------------------------------- */
+
+const buttonAbs = board.create('button', [
+
+    -3,
+    4.15,
+
+    '|x−1|',
+
+    function () {
+
+        currentFuncId = 'abs';
+
+        updateScene();
+
+    }
+
+], {
+
+    fixed: true
+
+});
+
+
+
+/* =========================================================
+   JSXGraph-Checkbox
+   ========================================================= */
+
+const closedCheckbox = board.create('checkbox', [
+
+    -5.75,
+    3.65,
+
+    'abgeschlossenes Intervall [a,b]'
+
+], {
+
+    checked: true,
+
+    fixed: true
+
+});
+
+
+
+/* =========================================================
+   Intervallgrenzen a und b als Punkte auf der x-Achse
+   ========================================================= */
+
+const aPoint = board.create('glider', [
+
+    -2,
+    0,
+    board.defaultAxes.x
+
+], {
+
+    name: '$a$',
+
+    size: 4,
+
+    strokeColor: 'black',
+    fillColor: 'white',
+
+    showInfobox: false,
+
+    label: {
+        offset: [0, 12]
+    },
+
+    layer: 9
+
+});
+
+
+
+const bPoint = board.create('glider', [
+
+    2,
+    0,
+    board.defaultAxes.x
+
+], {
+
+    name: '$b$',
+
+    size: 4,
+
+    strokeColor: 'black',
+    fillColor: 'white',
+
+    showInfobox: false,
+
+    label: {
+        offset: [0, 12]
+    },
+
+    layer: 9
+
+});
+
+
+
+/* =========================================================
+   Dynamische JSXGraph-Objekte
+   ========================================================= */
+
+let graph = null;
+
+let leftEndpoint = null;
+let rightEndpoint = null;
+
+let leftLine = null;
+let rightLine = null;
+
+let minPoint = null;
+let maxPoint = null;
+
+let leftShade = null;
+let rightShade = null;
+
+
+
+/* =========================================================
+   Hilfsfunktion
+   ========================================================= */
+
+function removeIfExists(obj) {
+
+    if (obj) {
+
+        board.removeObject(obj);
+
+    }
+}
+
+
+
+/* =========================================================
+   Globale Extremwerte bestimmen
+   ========================================================= */
+
+function determineGlobalExtrema(a, b, closed) {
+
+    const eps = 1e-9;
+
+    const critical = criticalPoints();
+
+
+
+    /* -----------------------------------------------------
+       Geschlossenes Intervall
+       ----------------------------------------------------- */
+
+    if (closed) {
+
+        const candidates = [
+
+            {
+                x: a,
+                y: f(a)
+            },
+
+            {
+                x: b,
+                y: f(b)
+            }
+
+        ];
+
+
+
+        critical.forEach(function (x) {
+
+            if (x >= a - eps && x <= b + eps) {
+
+                candidates.push({
+
+                    x: x,
+                    y: f(x)
+
+                });
+
+            }
+
+        });
+
+
+
+        let min = candidates[0];
+        let max = candidates[0];
+
+
+
+        candidates.forEach(function (p) {
+
+            if (p.y < min.y) {
+
+                min = p;
+
+            }
+
+
+            if (p.y > max.y) {
+
+                max = p;
+
+            }
+
+        });
+
+
+
+        return {
+
+            min: min,
+            max: max
+
+        };
+
+    }
+
+
+
+    /* -----------------------------------------------------
+       Offenes Intervall
+
+       Die Randwerte f(a), f(b) werden nicht angenommen.
+       Sie bestimmen aber mögliche Infima/Suprema.
+       ----------------------------------------------------- */
+
+    const interiorCandidates = [];
+
+
+
+    critical.forEach(function (x) {
+
+        if (x > a + eps && x < b - eps) {
+
+            interiorCandidates.push({
+
+                x: x,
+                y: f(x)
+
+            });
+
+        }
+
+    });
+
+
+
+    const comparisonValues = [
+
+        {
+            x: a,
+            y: f(a),
+            attained: false
+        },
+
+        {
+            x: b,
+            y: f(b),
+            attained: false
+        }
+
+    ];
+
+
+
+    interiorCandidates.forEach(function (p) {
+
+        comparisonValues.push({
+
+            x: p.x,
+            y: p.y,
+            attained: true
+
+        });
+
+    });
+
+
+
+    let infimum = comparisonValues[0].y;
+    let supremum = comparisonValues[0].y;
+
+
+
+    comparisonValues.forEach(function (p) {
+
+        if (p.y < infimum) {
+
+            infimum = p.y;
+
+        }
+
+
+        if (p.y > supremum) {
+
+            supremum = p.y;
+
+        }
+
+    });
+
+
+
+    let min = null;
+    let max = null;
+
+
+
+    interiorCandidates.forEach(function (p) {
+
+        if (
+            min === null &&
+            Math.abs(p.y - infimum) < eps
+        ) {
+
+            min = p;
+
+        }
+
+
+        if (
+            max === null &&
+            Math.abs(p.y - supremum) < eps
+        ) {
+
+            max = p;
+
+        }
+
+    });
+
+
+
+    return {
+
+        min: min,
+        max: max
+
+    };
+
+}
+
+
+
+/* =========================================================
+   Haupt-Update
+   ========================================================= */
+
+function updateScene() {
+
+
+    /* -----------------------------------------------------
+       a und b bestimmen
+       ----------------------------------------------------- */
+
+    let a = aPoint.X();
+    let b = bPoint.X();
+
+
+
+    if (a > b) {
+
+        const tmp = a;
+
+        a = b;
+        b = tmp;
+
+    }
+
+
+
+    /*
+     Falls die Punkte praktisch aufeinander liegen,
+     kleines positives Intervall verwenden.
+    */
+
+    if (Math.abs(a - b) < 0.001) {
+
+        b = a + 0.001;
+
+    }
+
+
+
+    const closed = closedCheckbox.Value();
+
+
+
+    /* -----------------------------------------------------
+       Alte Objekte entfernen
+       ----------------------------------------------------- */
+
+    removeIfExists(graph);
+
+    removeIfExists(leftEndpoint);
+    removeIfExists(rightEndpoint);
+
+    removeIfExists(leftLine);
+    removeIfExists(rightLine);
+
+    removeIfExists(minPoint);
+    removeIfExists(maxPoint);
+
+    removeIfExists(leftShade);
+    removeIfExists(rightShade);
+
+
+
+    /* -----------------------------------------------------
+       Aktuelle Boardgrenzen
+       ----------------------------------------------------- */
+
+    const bb = board.getBoundingBox();
+
+    const xmin = bb[0];
+    const ymax = bb[1];
+    const xmax = bb[2];
+    const ymin = bb[3];
+
+
+
+    /* =====================================================
+       Linker grauer Bereich
+       ===================================================== */
+
+    leftShade = board.create('polygon', [
+
+        [xmin, ymin],
+        [a, ymin],
+        [a, ymax],
+        [xmin, ymax]
+
+    ], {
+
+        fillColor: '#999999',
+        fillOpacity: 0.18,
+
+        fixed: true,
+        highlight: false,
+
+        layer: 1,
+
+        borders: {
+
+            strokeWidth: 0,
+
+            fixed: true,
+            highlight: false
+
+        },
+
+        vertices: {
+
+            visible: false,
+
+            fixed: true,
+            highlight: false
+
+        }
+
+    });
+
+
+
+    /* =====================================================
+       Rechter grauer Bereich
+       ===================================================== */
+
+    rightShade = board.create('polygon', [
+
+        [b, ymin],
+        [xmax, ymin],
+        [xmax, ymax],
+        [b, ymax]
+
+    ], {
+
+        fillColor: '#999999',
+        fillOpacity: 0.18,
+
+        fixed: true,
+        highlight: false,
+
+        layer: 1,
+
+        borders: {
+
+            strokeWidth: 0,
+
+            fixed: true,
+            highlight: false
+
+        },
+
+        vertices: {
+
+            visible: false,
+
+            fixed: true,
+            highlight: false
+
+        }
+
+    });
+
+
+
+    /* =====================================================
+       Funktionsgraph
+       ===================================================== */
+
+    graph = board.create('functiongraph', [
+
+        f,
+        xmin,
+        xmax
+
+    ], {
+
+        strokeColor: '#0066cc',
+
+        strokeWidth: 2,
+
+        fixed: true,
+        highlight: false,
+
+        layer: 4
+
+    });
+
+
+
+    /* =====================================================
+       Gestrichelte Linie bei x=a
+       ===================================================== */
+
+    leftLine = board.create('segment', [
+
+        [a, ymin],
+        [a, ymax]
+
+    ], {
+
+        strokeColor: '#777777',
+
+        strokeWidth: 1,
+
+        dash: 2,
+
+        fixed: true,
+        highlight: false,
+
+        layer: 3,
+
+        point1: {
+
+            visible: false,
+            fixed: true
+
+        },
+
+        point2: {
+
+            visible: false,
+            fixed: true
+
+        }
+
+    });
+
+
+
+    /* =====================================================
+       Gestrichelte Linie bei x=b
+       ===================================================== */
+
+    rightLine = board.create('segment', [
+
+        [b, ymin],
+        [b, ymax]
+
+    ], {
+
+        strokeColor: '#777777',
+
+        strokeWidth: 1,
+
+        dash: 2,
+
+        fixed: true,
+        highlight: false,
+
+        layer: 3,
+
+        point1: {
+
+            visible: false,
+            fixed: true
+
+        },
+
+        point2: {
+
+            visible: false,
+            fixed: true
+
+        }
+
+    });
+
+
+
+    /* =====================================================
+       Punkte bei a und b auf dem Funktionsgraphen
+       ===================================================== */
+
+    const closedEndpointStyle = {
+
+        name: '',
+
+        size: 3,
+
+        strokeColor: 'black',
+        fillColor: 'black',
+
+        fillOpacity: 1,
+
+        fixed: true,
+        highlight: false,
+
+        layer: 8
+
+    };
+
+
+
+    const openEndpointStyle = {
+
+        name: '',
+
+        size: 3,
+
+        strokeColor: 'black',
+        fillColor: 'white',
+
+        fillOpacity: 1,
+
+        fixed: true,
+        highlight: false,
+
+        layer: 8
+
+    };
+
+
+
+    leftEndpoint = board.create('point', [
+
+        a,
+        f(a)
+
+    ],
+
+        closed
+            ? closedEndpointStyle
+            : openEndpointStyle
+
+    );
+
+
+
+    rightEndpoint = board.create('point', [
+
+        b,
+        f(b)
+
+    ],
+
+        closed
+            ? closedEndpointStyle
+            : openEndpointStyle
+
+    );
+
+
+
+    /* =====================================================
+       Globale Extremwerte
+       ===================================================== */
+
+    const extrema = determineGlobalExtrema(
+
+        a,
+        b,
+        closed
+
+    );
+
+
+
+    /* -----------------------------------------------------
+       Globales Minimum
+       ----------------------------------------------------- */
+
+    if (extrema.min !== null) {
+
+        minPoint = board.create('point', [
+
+            extrema.min.x,
+            extrema.min.y
+
+        ], {
+
+            name: 'globales Minimum',
+
+            size: 4,
+
+            strokeColor: 'green',
+            fillColor: 'green',
+
+            fixed: true,
+            highlight: false,
+
+            layer: 9,
+
+            label: {
+
+                offset: [6, -16]
+
+            }
+
+        });
+
+    }
+
+
+
+    /* -----------------------------------------------------
+       Globales Maximum
+       ----------------------------------------------------- */
+
+    if (extrema.max !== null) {
+
+        maxPoint = board.create('point', [
+
+            extrema.max.x,
+            extrema.max.y
+
+        ], {
+
+            name: 'globales Maximum',
+
+            size: 4,
+
+            strokeColor: 'red',
+            fillColor: 'red',
+
+            fixed: true,
+            highlight: false,
+
+            layer: 9,
+
+            label: {
+
+                offset: [6, 8]
+
+            }
+
+        });
+
+    }
+
+
+
+    /* =====================================================
+       Information unter dem Graphen
+       ===================================================== */
+
+    const infoDiv =
+        document.getElementById('info');
+
+
+
+    const interval = closed
+        ? `$[${a.toFixed(2)}, ${b.toFixed(2)}]$`
+        : `$(${a.toFixed(2)}, ${b.toFixed(2)})$`;
+
+
+
+    let html = `
+
+        <p>
+            <strong>Aktuelle Einstellungen</strong><br>
+            Funktion: ${describeFunction(currentFuncId)}<br>
+            Intervall: ${interval}
+        </p>
+
+    `;
+
+
+
+    if (closed) {
+
+        html += `
+
+            <p style="margin-bottom: 0;">
+                <strong>Extremwertsatz:</strong><br>
+                Die Funktion $f$ ist stetig und das Intervall ist
+                <strong>abgeschlossen und beschränkt</strong>. Deshalb besitzt
+                $f$ auf diesem Intervall mindestens ein globales Minimum und
+                ein globales Maximum.
+            </p>
+
+        `;
+
+    }
+
+    else {
+
+        html += `
+
+            <p style="margin-bottom: 0;">
+                <strong>Achtung:</strong><br>
+                Das Intervall ist nicht abgeschlossen. Der Extremwertsatz ist
+                daher nicht anwendbar. Das schließt globale Extremwerte nicht
+                grundsätzlich aus; ihre Existenz wird nur nicht garantiert.
+                Beispielsweise besitzt $f(x)=x$ auf $(0,1)$ weder ein globales
+                Minimum noch ein globales Maximum.
+            </p>
+
+        `;
+
+    }
+
+
+
+    infoDiv.innerHTML = html;
+
+
+
+    /* =====================================================
+       MathJax nach dynamischer Änderung neu rendern
+       ===================================================== */
+
+    if (
+        window.MathJax &&
+        MathJax.typesetPromise
+    ) {
+
+        if (MathJax.typesetClear) {
+
+            MathJax.typesetClear([
+                infoDiv
+            ]);
+
+        }
+
+
+
+        MathJax.typesetPromise([
+            infoDiv
+        ]);
+
+    }
+
+
+
+    board.update();
+
+}
+
+
+
+/* =========================================================
+   Events
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   a bzw. b verschoben
+   --------------------------------------------------------- */
+
+aPoint.on(
+    'drag',
+    updateScene
+);
+
+bPoint.on(
+    'drag',
+    updateScene
+);
+
+
+
+/* ---------------------------------------------------------
+   JSXGraph Checkbox geändert
+
+   Dadurch werden sofort
+
+   [a,b] <-> (a,b),
+
+   die Randpunkte,
+
+   die globalen Extrema
+
+   und der Erklärungstext aktualisiert.
+   --------------------------------------------------------- */
+
+JXG.addEvent(
+
+    closedCheckbox.rendNodeCheckbox,
+
+    'change',
+
+    function () {
+
+        updateScene();
+
+    },
+
+    closedCheckbox
+
+);
+
+
+
+/* =========================================================
+   Start
+   ========================================================= */
+
+updateScene();
+
+
+</script>
+
+
+
+</body>
+</html>

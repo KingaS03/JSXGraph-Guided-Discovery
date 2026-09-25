@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uneigentliche Integrale explorieren – JSXGraph</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            color: #222;
+        }
+
+        #intro,
+        #controlBoard,
+        #boards,
+        #info {
+            width: min(1040px, calc(100vw - 32px));
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        #intro {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #intro h2 {
+            margin: 0 0 8px;
+        }
+
+        #explanation,
+        #info {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.48;
+        }
+
+        #explanation p:first-child,
+        #info p:first-child {
+            margin-top: 0;
+        }
+
+        #explanation ol {
+            margin-bottom: 0;
+            padding-left: 24px;
+        }
+
+        #explanation li + li {
+            margin-top: 5px;
+        }
+
+        #controlBoard {
+            height: 155px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        #boards {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .board-panel h3 {
+            min-height: 40px;
+            margin: 0 0 8px;
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        .graph-board {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        #info {
+            margin-bottom: 20px;
+        }
+
+        #info p:last-child {
+            margin-bottom: 0;
+        }
+
+        .definition {
+            padding: 10px 12px;
+            border-left: 4px solid #2166ac;
+            background: #eef5fb;
+        }
+
+        .result {
+            padding: 9px 12px;
+            border-left: 4px solid #1b9e77;
+            background: #eef8f4;
+        }
+
+        .hidden-result {
+            color: #666;
+            font-style: italic;
+        }
+
+        .legend {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-right: 15px;
+            white-space: nowrap;
+        }
+
+        .legend-line {
+            display: inline-block;
+            width: 24px;
+            border-top: 3px solid;
+        }
+
+        .legend-line.blue { border-color: #2166ac; }
+        .legend-line.orange { border-color: #e66101; }
+        .legend-line.green { border-color: #1b9e77; }
+        .legend-line.purple { border-color: #7b3294; }
+        .legend-line.dashed { border-top-style: dashed; }
+
+        .JXGtext,
+        .JXGinput,
+        .JXGbutton {
+            font-family: sans-serif !important;
+        }
+
+        @media (max-width: 850px) {
+            #boards {
+                grid-template-columns: 1fr;
+            }
+
+            .board-panel h3 {
+                min-height: auto;
+            }
+
+            .graph-board {
+                height: 520px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            #controlBoard {
+                height: 180px;
+            }
+
+            .graph-board {
+                height: 470px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro">
+        <h2>Uneigentliche Integrale explorieren</h2>
+
+        <div id="explanation">
+            <p>
+                Ein uneigentliches Integral wird durch einen Grenzwert von
+                bestimmten Integralen definiert. Links siehst du den
+                Integranden und den momentan abgeschnittenen Integrationsbereich.
+                Rechts wird der Wert des bestimmten Integrals als Funktion der
+                beweglichen Grenze dargestellt.
+            </p>
+
+            <p>
+                Wechsle zwischen einer unendlichen Integrationsgrenze, einem
+                unbeschränkten Integranden am Rand, einer inneren Singularität
+                und zwei unendlichen Integrationsgrenzen. Blende das Ergebnis
+                jeweils erst ein, nachdem du eine Vermutung formuliert hast.
+            </p>
+
+            <p><strong>Untersuche:</strong></p>
+            <ol>
+                <li>
+                    Verändere die bewegliche Grenze. Nähert sich der Integralwert
+                    einem endlichen Wert?
+                </li>
+                <li>
+                    Verändere den Parameter \(p\) beziehungsweise \(c\). Wann
+                    ändert sich das Konvergenzverhalten?
+                </li>
+                <li>
+                    Reicht die Bedingung \(f(x)\to0\) für die Konvergenz eines
+                    uneigentlichen Integrals aus?
+                </li>
+                <li>
+                    Vergleiche die Grenzübergänge \(b\to+\infty\) und
+                    \(h\to0^+\). Welche Rolle spielt der abgeschnittene Bereich?
+                </li>
+                <li>
+                    Prüfe bei einer inneren Singularität beide Seiten einzeln.
+                    Darf man divergierende Beiträge gegeneinander aufheben?
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="controlBoard"
+         class="jxgbox"
+         aria-label="Steuerung der Beispiele zu uneigentlichen Integralen"></div>
+
+    <div id="boards">
+        <section class="board-panel">
+            <h3 id="leftTitle"></h3>
+            <div id="leftBoard"
+                 class="jxgbox graph-board"
+                 aria-label="Integrand und abgeschnittener Integrationsbereich"></div>
+        </section>
+
+        <section class="board-panel">
+            <h3 id="rightTitle"></h3>
+            <div id="rightBoard"
+                 class="jxgbox graph-board"
+                 aria-label="Integralwert in Abhängigkeit von der beweglichen Grenze"></div>
+        </section>
+    </div>
+
+    <div id="info" aria-live="polite"></div>
+
+    <script>
+        'use strict';
+
+        JXG.Options.text.useMathJax = true;
+
+        const COLORS = {
+            function: '#2166ac',
+            area: '#74add1',
+            current: '#d73027',
+            left: '#7b3294',
+            right: '#e66101',
+            limit: '#1b9e77',
+            sum: '#555555',
+            guide: '#777777'
+        };
+
+        const cases = [
+            {
+                key: 'infiniteBoundary',
+                name: 'Fall 1: unendliche Integrationsgrenze',
+                leftTitle: 'Integrand und \\(\\displaystyle\\int_1^b f_p(x)\\,dx\\)',
+                rightTitle: 'Integralwert \\(A_p(b)=\\displaystyle\\int_1^b f_p(x)\\,dx\\)'
+            },
+            {
+                key: 'endpointSingularity',
+                name: 'Fall 2: unbeschränkter Integrand am Rand',
+                leftTitle: 'Integrand und \\(\\displaystyle\\int_h^1 f_p(x)\\,dx\\)',
+                rightTitle: 'Integralwert \\(B_p(h)=\\displaystyle\\int_h^1 f_p(x)\\,dx\\)'
+            },
+            {
+                key: 'innerSingularity',
+                name: 'Fall 3: innere Singularität',
+                leftTitle: 'Getrennte Integrale links und rechts von \\(c=0\\)',
+                rightTitle: 'Einseitige Integralwerte \\(L(h)\\) und \\(R(h)\\)'
+            },
+            {
+                key: 'wholeLine',
+                name: 'Fall 4: zwei unendliche Integrationsgrenzen',
+                leftTitle: 'Zerlegung bei \\(0\\) für \\(f_c(x)=xe^{-cx^2}\\)',
+                rightTitle: 'Einseitige Integralwerte \\(L_c(R)\\) und \\(R_c(R)\\)'
+            }
+        ];
+
+        let caseIndex = 0;
+        let showResult = false;
+        let controlBoard = null;
+        let leftBoard = null;
+        let rightBoard = null;
+        let primarySlider = null;
+        let secondarySlider = null;
+        let resultCheckbox = null;
+        let typesetTimer = null;
+
+        function currentCase() {
+            return cases[caseIndex];
+        }
+
+        function formatNumber(value, digits) {
+            if (!Number.isFinite(value)) return 'nicht endlich';
+            return value.toFixed(digits).replace('.', ',');
+        }
+
+        function approximately(value, target) {
+            return Math.abs(value - target) < 1e-8;
+        }
+
+        function tailIntegral(p, b) {
+            if (approximately(p, 1)) return Math.log(b);
+            return (Math.pow(b, 1 - p) - 1) / (1 - p);
+        }
+
+        function endpointIntegral(p, h) {
+            if (approximately(p, 1)) return -Math.log(h);
+            return (1 - Math.pow(h, 1 - p)) / (1 - p);
+        }
+
+        function wholeLeft(c, radius) {
+            return (Math.exp(-c * radius * radius) - 1) / (2 * c);
+        }
+
+        function wholeRight(c, radius) {
+            return (1 - Math.exp(-c * radius * radius)) / (2 * c);
+        }
+
+        function addSignature(board) {
+            board.create('text', [
+                function () {
+                    const bb = board.getBoundingBox();
+                    return bb[0] + 0.012 * (bb[2] - bb[0]);
+                },
+                function () {
+                    const bb = board.getBoundingBox();
+                    return bb[3] + 0.012 * (bb[1] - bb[3]);
+                },
+                '© 2026 Kinga Sipos • CC BY-SA 4.0'
+            ], {
+                fontSize: 10,
+                anchorX: 'left',
+                anchorY: 'bottom',
+                fixed: true,
+                strokeColor: '#666666',
+                opacity: 0.62,
+                highlight: false
+            });
+        }
+
+        function addAxes(board, xName, yName) {
+            board.create('axis', [[0, 0], [1, 0]], {
+                name: xName,
+                withLabel: true,
+                label: { position: 'rt', offset: [-14, -18] },
+                strokeColor: '#555555',
+                highlight: false,
+                ticks: { strokeColor: '#888888' }
+            });
+
+            board.create('axis', [[0, 0], [0, 1]], {
+                name: yName,
+                withLabel: true,
+                label: { position: 'rt', offset: [10, -10] },
+                strokeColor: '#555555',
+                highlight: false,
+                ticks: { strokeColor: '#888888' }
+            });
+        }
+
+        function createFilledArea(board, fn, startFn, endFn, color) {
+            const area = board.create('curve', [[], []], {
+                strokeWidth: 0,
+                fillColor: color,
+                fillOpacity: 0.28,
+                fixed: true,
+                highlight: false
+            });
+
+            area.updateDataArray = function () {
+                const start = startFn();
+                const end = endFn();
+                const bb = board.getBoundingBox();
+                const lower = bb[3];
+                const upper = bb[1];
+                const n = 150;
+
+                this.dataX = [start];
+                this.dataY = [0];
+
+                for (let i = 0; i <= n; i += 1) {
+                    const x = start + (end - start) * i / n;
+                    const rawY = fn(x);
+                    const y = Math.max(lower, Math.min(upper, rawY));
+                    this.dataX.push(x);
+                    this.dataY.push(y);
+                }
+
+                this.dataX.push(end);
+                this.dataY.push(0);
+            };
+
+            return area;
+        }
+
+        function createBoard(id, boundingbox) {
+            return JXG.JSXGraph.initBoard(id, {
+                boundingbox: boundingbox,
+                axis: false,
+                keepaspectratio: false,
+                showCopyright: false,
+                showNavigation: true,
+                pan: { enabled: true },
+                zoom: { wheel: true, needShift: true }
+            });
+        }
+
+        function registerSlider(slider) {
+            slider.on('drag', updateAll);
+            slider.on('up', updateAll);
+        }
+
+        function buildControls() {
+            if (controlBoard) JXG.JSXGraph.freeBoard(controlBoard);
+
+            controlBoard = JXG.JSXGraph.initBoard('controlBoard', {
+                boundingbox: [0, 2.05, 14, -1.55],
+                axis: false,
+                showCopyright: false,
+                showNavigation: false,
+                pan: { enabled: false },
+                zoom: { enabled: false }
+            });
+
+            controlBoard.create('button', [
+                0.45,
+                1.52,
+                'Beispiel wechseln',
+                function () {
+                    window.setTimeout(function () {
+                        caseIndex = (caseIndex + 1) % cases.length;
+                        showResult = false;
+                        buildAll();
+                    }, 0);
+                }
+            ], { fixed: true });
+
+            controlBoard.create('text', [
+                3.35,
+                1.54,
+                function () { return currentCase().name; }
+            ], {
+                fixed: true,
+                fontSize: 15,
+                strokeColor: '#222222',
+                highlight: false
+            });
+
+            resultCheckbox = controlBoard.create('checkbox', [
+                10.85,
+                1.52,
+                'Ergebnis anzeigen'
+            ], { fixed: true });
+
+            resultCheckbox.rendNodeCheckbox.checked = showResult;
+            JXG.addEvent(
+                resultCheckbox.rendNodeCheckbox,
+                'change',
+                function () {
+                    showResult = resultCheckbox.Value();
+                    updateAll();
+                },
+                resultCheckbox
+            );
+
+            const key = currentCase().key;
+
+            if (key === 'infiniteBoundary') {
+                primarySlider = controlBoard.create('slider', [
+                    [2.7, 0.45], [11.2, 0.45], [0.5, 1, 2]
+                ], {
+                    name: '\\(p\\)',
+                    snapWidth: 0.1,
+                    precision: 1,
+                    fixed: false
+                });
+                secondarySlider = controlBoard.create('slider', [
+                    [2.7, -0.65], [11.2, -0.65], [1.2, 6, 15]
+                ], {
+                    name: '\\(b\\)',
+                    snapWidth: 0.1,
+                    precision: 1,
+                    fixed: false
+                });
+            } else if (key === 'endpointSingularity') {
+                primarySlider = controlBoard.create('slider', [
+                    [2.7, 0.45], [11.2, 0.45], [0.25, 0.5, 1.5]
+                ], {
+                    name: '\\(p\\)',
+                    snapWidth: 0.05,
+                    precision: 2,
+                    fixed: false
+                });
+                secondarySlider = controlBoard.create('slider', [
+                    [2.7, -0.65], [11.2, -0.65], [0.03, 0.35, 0.8]
+                ], {
+                    name: '\\(h\\)',
+                    snapWidth: 0.01,
+                    precision: 2,
+                    fixed: false
+                });
+            } else if (key === 'innerSingularity') {
+                primarySlider = null;
+                secondarySlider = controlBoard.create('slider', [
+                    [2.7, 0.05], [11.2, 0.05], [0.03, 0.35, 0.8]
+                ], {
+                    name: '\\(h\\)',
+                    snapWidth: 0.01,
+                    precision: 2,
+                    fixed: false
+                });
+            } else {
+                primarySlider = controlBoard.create('slider', [
+                    [2.7, 0.45], [11.2, 0.45], [0.4, 1, 2]
+                ], {
+                    name: '\\(c\\)',
+                    snapWidth: 0.1,
+                    precision: 1,
+                    fixed: false
+                });
+                secondarySlider = controlBoard.create('slider', [
+                    [2.7, -0.65], [11.2, -0.65], [0.2, 1.8, 4]
+                ], {
+                    name: '\\(R\\)',
+                    snapWidth: 0.1,
+                    precision: 1,
+                    fixed: false
+                });
+            }
+
+            if (primarySlider) registerSlider(primarySlider);
+            registerSlider(secondarySlider);
+        }
+
+        function buildInfiniteBoundary() {
+            leftBoard = createBoard('leftBoard', [-1, 5.8, 16, -1.15]);
+            rightBoard = createBoard('rightBoard', [-1, 6.3, 16, -1.15]);
+            addAxes(leftBoard, '\\(x\\)', '\\(f_p(x)\\)');
+            addAxes(rightBoard, '\\(b\\)', '\\(A_p(b)\\)');
+
+            const p = function () { return primarySlider.Value(); };
+            const b = function () { return secondarySlider.Value(); };
+            const fn = function (x) { return Math.pow(x, -p()); };
+
+            createFilledArea(leftBoard, fn, function () { return 1; }, b, COLORS.area);
+            leftBoard.create('functiongraph', [fn, 1, 15], {
+                strokeColor: COLORS.function,
+                strokeWidth: 3,
+                highlight: false
+            });
+            leftBoard.create('segment', [
+                [function () { return b(); }, 0],
+                [function () { return b(); }, function () { return fn(b()); }]
+            ], {
+                strokeColor: COLORS.current,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true,
+                highlight: false
+            });
+            leftBoard.create('text', [
+                function () { return b(); },
+                -0.28,
+                '\\(b\\)'
+            ], {
+                anchorX: 'middle',
+                fixed: true,
+                fontSize: 14,
+                strokeColor: COLORS.current
+            });
+
+            rightBoard.create('functiongraph', [
+                function (x) { return tailIntegral(p(), x); }, 1, 15
+            ], {
+                strokeColor: COLORS.function,
+                strokeWidth: 3,
+                highlight: false
+            });
+            rightBoard.create('point', [
+                b,
+                function () { return tailIntegral(p(), b()); }
+            ], {
+                name: '',
+                size: 5,
+                strokeColor: COLORS.current,
+                fillColor: COLORS.current,
+                fixed: true
+            });
+            rightBoard.create('segment', [
+                [1, function () { return 1 / (p() - 1); }],
+                [15, function () { return 1 / (p() - 1); }]
+            ], {
+                visible: function () { return showResult && p() > 1; },
+                strokeColor: COLORS.limit,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true,
+                highlight: false
+            });
+
+            addSignature(leftBoard);
+            addSignature(rightBoard);
+        }
+
+        function buildEndpointSingularity() {
+            leftBoard = createBoard('leftBoard', [-0.13, 10.5, 1.22, -1.6]);
+            rightBoard = createBoard('rightBoard', [-0.055, 10.5, 0.85, -1.6]);
+            addAxes(leftBoard, '\\(x\\)', '\\(f_p(x)\\)');
+            addAxes(rightBoard, '\\(h\\)', '\\(B_p(h)\\)');
+
+            const p = function () { return primarySlider.Value(); };
+            const h = function () { return secondarySlider.Value(); };
+            const fn = function (x) { return Math.pow(x, -p()); };
+
+            createFilledArea(leftBoard, fn, h, function () { return 1; }, COLORS.area);
+            leftBoard.create('functiongraph', [fn, 0.012, 1.08], {
+                strokeColor: COLORS.function,
+                strokeWidth: 3,
+                highlight: false
+            });
+            leftBoard.create('segment', [
+                [h, 0],
+                [h, function () { return Math.min(10.5, fn(h())); }]
+            ], {
+                strokeColor: COLORS.current,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true,
+                highlight: false
+            });
+            leftBoard.create('text', [h, -0.48, '\\(h\\)'], {
+                anchorX: 'middle',
+                fixed: true,
+                fontSize: 14,
+                strokeColor: COLORS.current
+            });
+
+            rightBoard.create('functiongraph', [
+                function (x) { return endpointIntegral(p(), x); }, 0.02, 0.8
+            ], {
+                strokeColor: COLORS.function,
+                strokeWidth: 3,
+                highlight: false
+            });
+            rightBoard.create('point', [
+                h,
+                function () { return endpointIntegral(p(), h()); }
+            ], {
+                name: '',
+                size: 5,
+                strokeColor: COLORS.current,
+                fillColor: COLORS.current,
+                fixed: true
+            });
+            rightBoard.create('segment', [
+                [0, function () { return 1 / (1 - p()); }],
+                [0.8, function () { return 1 / (1 - p()); }]
+            ], {
+                visible: function () { return showResult && p() < 1; },
+                strokeColor: COLORS.limit,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true,
+                highlight: false
+            });
+
+            addSignature(leftBoard);
+            addSignature(rightBoard);
+        }
+
+        function buildInnerSingularity() {
+            leftBoard = createBoard('leftBoard', [-1.28, 6.2, 1.28, -6.2]);
+            rightBoard = createBoard('rightBoard', [-0.06, 4.6, 0.86, -4.6]);
+            addAxes(leftBoard, '\\(x\\)', '\\(f(x)\\)');
+            addAxes(rightBoard, '\\(h\\)', '\\(L(h),\\ R(h)\\)');
+
+            const h = function () { return secondarySlider.Value(); };
+            const fn = function (x) { return 1 / x; };
+
+            createFilledArea(
+                leftBoard,
+                fn,
+                function () { return -1; },
+                function () { return -h(); },
+                COLORS.left
+            );
+            createFilledArea(
+                leftBoard,
+                fn,
+                h,
+                function () { return 1; },
+                COLORS.right
+            );
+            leftBoard.create('functiongraph', [fn, -1.15, -0.02], {
+                strokeColor: COLORS.left,
+                strokeWidth: 3,
+                highlight: false
+            });
+            leftBoard.create('functiongraph', [fn, 0.02, 1.15], {
+                strokeColor: COLORS.right,
+                strokeWidth: 3,
+                highlight: false
+            });
+            leftBoard.create('segment', [[function () { return -h(); }, -6.2], [function () { return -h(); }, 0]], {
+                strokeColor: COLORS.current,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true
+            });
+            leftBoard.create('segment', [[h, 0], [h, 6.2]], {
+                strokeColor: COLORS.current,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true
+            });
+            leftBoard.create('text', [function () { return -h(); }, 0.55, '\\(-h\\)'], {
+                anchorX: 'middle',
+                fixed: true,
+                fontSize: 14,
+                strokeColor: COLORS.current
+            });
+            leftBoard.create('text', [h, -0.55, '\\(h\\)'], {
+                anchorX: 'middle',
+                fixed: true,
+                fontSize: 14,
+                strokeColor: COLORS.current
+            });
+
+            rightBoard.create('functiongraph', [Math.log, 0.025, 0.8], {
+                strokeColor: COLORS.left,
+                strokeWidth: 3,
+                highlight: false
+            });
+            rightBoard.create('functiongraph', [
+                function (x) { return -Math.log(x); }, 0.025, 0.8
+            ], {
+                strokeColor: COLORS.right,
+                strokeWidth: 3,
+                highlight: false
+            });
+            rightBoard.create('segment', [[0.025, 0], [0.8, 0]], {
+                visible: function () { return showResult; },
+                strokeColor: COLORS.sum,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true
+            });
+            rightBoard.create('point', [h, function () { return Math.log(h()); }], {
+                name: '',
+                size: 4,
+                strokeColor: COLORS.left,
+                fillColor: COLORS.left,
+                fixed: true
+            });
+            rightBoard.create('point', [h, function () { return -Math.log(h()); }], {
+                name: '',
+                size: 4,
+                strokeColor: COLORS.right,
+                fillColor: COLORS.right,
+                fixed: true
+            });
+
+            addSignature(leftBoard);
+            addSignature(rightBoard);
+        }
+
+        function buildWholeLine() {
+            leftBoard = createBoard('leftBoard', [-4.6, 1.65, 4.6, -1.65]);
+            rightBoard = createBoard('rightBoard', [-0.25, 2.7, 4.5, -2.7]);
+            addAxes(leftBoard, '\\(x\\)', '\\(f_c(x)\\)');
+            addAxes(rightBoard, '\\(R\\)', '\\(L_c(R),\\ R_c(R)\\)');
+
+            const c = function () { return primarySlider.Value(); };
+            const radius = function () { return secondarySlider.Value(); };
+            const fn = function (x) { return x * Math.exp(-c() * x * x); };
+
+            createFilledArea(
+                leftBoard,
+                fn,
+                function () { return -radius(); },
+                function () { return 0; },
+                COLORS.left
+            );
+            createFilledArea(
+                leftBoard,
+                fn,
+                function () { return 0; },
+                radius,
+                COLORS.right
+            );
+            leftBoard.create('functiongraph', [fn, -4.3, 4.3], {
+                strokeColor: COLORS.function,
+                strokeWidth: 3,
+                highlight: false
+            });
+            leftBoard.create('segment', [
+                [function () { return -radius(); }, 0],
+                [function () { return -radius(); }, function () { return fn(-radius()); }]
+            ], {
+                strokeColor: COLORS.current,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true
+            });
+            leftBoard.create('segment', [
+                [radius, 0],
+                [radius, function () { return fn(radius()); }]
+            ], {
+                strokeColor: COLORS.current,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true
+            });
+
+            rightBoard.create('functiongraph', [
+                function (x) { return wholeLeft(c(), x); }, 0, 4
+            ], {
+                strokeColor: COLORS.left,
+                strokeWidth: 3,
+                highlight: false
+            });
+            rightBoard.create('functiongraph', [
+                function (x) { return wholeRight(c(), x); }, 0, 4
+            ], {
+                strokeColor: COLORS.right,
+                strokeWidth: 3,
+                highlight: false
+            });
+            rightBoard.create('point', [
+                radius,
+                function () { return wholeLeft(c(), radius()); }
+            ], {
+                name: '',
+                size: 4,
+                strokeColor: COLORS.left,
+                fillColor: COLORS.left,
+                fixed: true
+            });
+            rightBoard.create('point', [
+                radius,
+                function () { return wholeRight(c(), radius()); }
+            ], {
+                name: '',
+                size: 4,
+                strokeColor: COLORS.right,
+                fillColor: COLORS.right,
+                fixed: true
+            });
+            rightBoard.create('segment', [
+                [0, function () { return -1 / (2 * c()); }],
+                [4, function () { return -1 / (2 * c()); }]
+            ], {
+                visible: function () { return showResult; },
+                strokeColor: COLORS.limit,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true
+            });
+            rightBoard.create('segment', [
+                [0, function () { return 1 / (2 * c()); }],
+                [4, function () { return 1 / (2 * c()); }]
+            ], {
+                visible: function () { return showResult; },
+                strokeColor: COLORS.limit,
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true
+            });
+
+            addSignature(leftBoard);
+            addSignature(rightBoard);
+        }
+
+        function buildVisualizations() {
+            if (leftBoard) JXG.JSXGraph.freeBoard(leftBoard);
+            if (rightBoard) JXG.JSXGraph.freeBoard(rightBoard);
+
+            const leftTitle = document.getElementById('leftTitle');
+            const rightTitle = document.getElementById('rightTitle');
+            if (window.MathJax && MathJax.typesetClear) {
+                MathJax.typesetClear([leftTitle, rightTitle]);
+            }
+            leftTitle.innerHTML = currentCase().leftTitle;
+            rightTitle.innerHTML = currentCase().rightTitle;
+
+            const key = currentCase().key;
+            if (key === 'infiniteBoundary') buildInfiniteBoundary();
+            if (key === 'endpointSingularity') buildEndpointSingularity();
+            if (key === 'innerSingularity') buildInnerSingularity();
+            if (key === 'wholeLine') buildWholeLine();
+        }
+
+        function hiddenResultHtml() {
+            return '<p class="hidden-result">' +
+                'Formuliere zuerst eine Vermutung und aktiviere danach ' +
+                '«Ergebnis anzeigen».</p>';
+        }
+
+        function queueDynamicTypeset() {
+            window.clearTimeout(typesetTimer);
+            typesetTimer = window.setTimeout(function () {
+                if (!window.MathJax || !MathJax.typesetPromise) return;
+
+                const elements = [
+                    document.getElementById('leftTitle'),
+                    document.getElementById('rightTitle'),
+                    document.getElementById('info')
+                ];
+
+                MathJax.typesetPromise(elements);
+            }, 60);
+        }
+
+        function infiniteBoundaryInfo() {
+            const p = primarySlider.Value();
+            const b = secondarySlider.Value();
+            const value = tailIntegral(p, b);
+            let result = hiddenResultHtml();
+
+            if (showResult) {
+                if (p > 1) {
+                    result = '<p class="result"><strong>Ergebnis:</strong> ' +
+                        'Das uneigentliche Integral konvergiert und ' +
+                        '\\(\\displaystyle\\int_1^{+\\infty}x^{-p}\\,dx=' +
+                        '\\frac{1}{p-1}=' + formatNumber(1 / (p - 1), 3) + '\\).</p>';
+                } else {
+                    result = '<p class="result"><strong>Ergebnis:</strong> ' +
+                        'Das uneigentliche Integral divergiert. Für ' +
+                        '\\(p\\leq1\\) wächst \\(A_p(b)\\) ohne endliche ' +
+                        'Schranke.</p>';
+                }
+            }
+
+            return '<p class="definition"><strong>Definition:</strong> ' +
+                '\\[\\int_1^{+\\infty}\\frac{1}{x^p}\\,dx' +
+                ':=\\lim_{b\\to+\\infty}\\int_1^b\\frac{1}{x^p}\\,dx.\\]' +
+                '</p><p><strong>Aktuelle Werte</strong><br>' +
+                '\\(p=' + formatNumber(p, 1) + '\\), ' +
+                '\\(b=' + formatNumber(b, 1) + '\\)<br>' +
+                '\\(A_p(b)=\\displaystyle\\int_1^b x^{-p}\\,dx=' +
+                formatNumber(value, 3) + '\\)</p>' + result +
+                '<p><span class="legend"><span class="legend-line blue"></span>' +
+                '\\(A_p(b)\\)</span>' +
+                '<span class="legend"><span class="legend-line green dashed"></span>' +
+                'Grenzwert, falls endlich</span></p>';
+        }
+
+        function endpointInfo() {
+            const p = primarySlider.Value();
+            const h = secondarySlider.Value();
+            const value = endpointIntegral(p, h);
+            let result = hiddenResultHtml();
+
+            if (showResult) {
+                if (p < 1) {
+                    result = '<p class="result"><strong>Ergebnis:</strong> ' +
+                        'Das uneigentliche Integral konvergiert und ' +
+                        '\\(\\displaystyle\\int_0^1x^{-p}\\,dx=' +
+                        '\\frac{1}{1-p}=' + formatNumber(1 / (1 - p), 3) + '\\).</p>';
+                } else {
+                    result = '<p class="result"><strong>Ergebnis:</strong> ' +
+                        'Das uneigentliche Integral divergiert. Für ' +
+                        '\\(p\\geq1\\) wächst \\(B_p(h)\\) für ' +
+                        '\\(h\\to0^+\\) ohne endliche Schranke.</p>';
+                }
+            }
+
+            return '<p class="definition"><strong>Definition:</strong> ' +
+                'Wenn \\(f\\) nur auf \\((a,b]\\) stetig und definiert ist, gilt ' +
+                '\\[\\int_a^b f(x)\\,dx' +
+                ':=\\lim_{h\\to0^+}\\int_{a+h}^b f(x)\\,dx.\\]' +
+                'Hier also ' +
+                '\\(\\displaystyle\\int_0^1x^{-p}\\,dx' +
+                ':=\\lim_{h\\to0^+}\\int_h^1x^{-p}\\,dx\\).</p>' +
+                '<p><strong>Aktuelle Werte</strong><br>' +
+                '\\(p=' + formatNumber(p, 2) + '\\), ' +
+                '\\(h=' + formatNumber(h, 2) + '\\)<br>' +
+                '\\(B_p(h)=\\displaystyle\\int_h^1x^{-p}\\,dx=' +
+                formatNumber(value, 3) + '\\)</p>' + result +
+                '<p><span class="legend"><span class="legend-line blue"></span>' +
+                '\\(B_p(h)\\)</span>' +
+                '<span class="legend"><span class="legend-line green dashed"></span>' +
+                'Grenzwert, falls endlich</span></p>';
+        }
+
+        function innerInfo() {
+            const h = secondarySlider.Value();
+            const left = Math.log(h);
+            const right = -Math.log(h);
+            let result = hiddenResultHtml();
+
+            if (showResult) {
+                result = '<p class="result"><strong>Ergebnis:</strong> ' +
+                    '\\(L(h)\\to-\\infty\\) und ' +
+                    '\\(R(h)\\to+\\infty\\). Beide einseitigen Integrale ' +
+                    'divergieren. Deshalb divergiert ' +
+                    '\\(\\displaystyle\\int_{-1}^{1}\\frac1x\\,dx\\), ' +
+                    'obwohl \\(L(h)+R(h)=0\\) für jedes \\(h>0\\) gilt. ' +
+                    'Die symmetrische Aufhebung ist nicht die Definition des ' +
+                    'uneigentlichen Integrals.</p>';
+            }
+
+            return '<p class="definition"><strong>Definition aus den Notizen:</strong> ' +
+                '\\[\\int_a^b f(x)\\,dx' +
+                ':=\\int_a^c f(x)\\,dx+\\int_c^b f(x)\\,dx' +
+                '=\\lim_{h\\to0^+}\\int_a^{c-h}f(x)\\,dx' +
+                '+\\lim_{h\\to0^+}\\int_{c+h}^b f(x)\\,dx.\\]' +
+                'Beide Grenzwerte müssen existieren und endlich sein.</p>' +
+                '<p><strong>Aktuelle Werte für \\(f(x)=1/x\\), ' +
+                '\\(a=-1\\), \\(c=0\\), \\(b=1\\)</strong><br>' +
+                '\\(h=' + formatNumber(h, 2) + '\\)<br>' +
+                '\\(L(h)=\\displaystyle\\int_{-1}^{-h}\\frac1x\\,dx=' +
+                formatNumber(left, 3) + '\\)<br>' +
+                '\\(R(h)=\\displaystyle\\int_h^1\\frac1x\\,dx=' +
+                formatNumber(right, 3) + '\\)<br>' +
+                '\\(L(h)+R(h)=0\\)</p>' + result +
+                '<p><span class="legend"><span class="legend-line purple"></span>' +
+                '\\(L(h)\\)</span>' +
+                '<span class="legend"><span class="legend-line orange"></span>' +
+                '\\(R(h)\\)</span>' +
+                '<span class="legend"><span class="legend-line dashed"></span>' +
+                'symmetrische Summe</span></p>';
+        }
+
+        function wholeLineInfo() {
+            const c = primarySlider.Value();
+            const radius = secondarySlider.Value();
+            const left = wholeLeft(c, radius);
+            const right = wholeRight(c, radius);
+            let result = hiddenResultHtml();
+
+            if (showResult) {
+                result = '<p class="result"><strong>Ergebnis:</strong> Beide ' +
+                    'einseitigen Integrale konvergieren: ' +
+                    '\\(\\displaystyle\\int_{-\\infty}^{0}xe^{-cx^2}\\,dx' +
+                    '=-\\frac1{2c}\\) und ' +
+                    '\\(\\displaystyle\\int_{0}^{+\\infty}xe^{-cx^2}\\,dx' +
+                    '=\\frac1{2c}\\). Daher konvergiert das Integral über ' +
+                    '\\(\\mathbb R\\) und hat den Wert \\(0\\).</p>';
+            }
+
+            return '<p class="definition"><strong>Definition aus den Notizen:</strong> ' +
+                'Für eine stetige Funktion \\(f\\) gilt ' +
+                '\\[\\int_{-\\infty}^{+\\infty}f(x)\\,dx' +
+                ':=\\int_{-\\infty}^{0}f(x)\\,dx' +
+                '+\\int_{0}^{+\\infty}f(x)\\,dx.\\]' +
+                'Das Integral konvergiert nur, wenn beide Integrale auf der ' +
+                'rechten Seite konvergieren.</p>' +
+                '<p><strong>Aktuelle Werte für \\(f_c(x)=xe^{-cx^2}\\)</strong><br>' +
+                '\\(c=' + formatNumber(c, 1) + '\\), ' +
+                '\\(R=' + formatNumber(radius, 1) + '\\)<br>' +
+                '\\(L_c(R)=\\displaystyle\\int_{-R}^{0}f_c(x)\\,dx=' +
+                formatNumber(left, 3) + '\\)<br>' +
+                '\\(R_c(R)=\\displaystyle\\int_{0}^{R}f_c(x)\\,dx=' +
+                formatNumber(right, 3) + '\\)</p>' + result +
+                '<p><span class="legend"><span class="legend-line purple"></span>' +
+                '\\(L_c(R)\\)</span>' +
+                '<span class="legend"><span class="legend-line orange"></span>' +
+                '\\(R_c(R)\\)</span>' +
+                '<span class="legend"><span class="legend-line green dashed"></span>' +
+                'einseitige Grenzwerte</span></p>' +
+                '<p><em>Hinweis:</em> Der gemeinsame Radius \\(R\\) dient nur ' +
+                'der Visualisierung. In der Definition werden die beiden ' +
+                'einseitigen uneigentlichen Integrale getrennt geprüft.</p>';
+        }
+
+        function updateInformation() {
+            const key = currentCase().key;
+            let html = '';
+            if (key === 'infiniteBoundary') html = infiniteBoundaryInfo();
+            if (key === 'endpointSingularity') html = endpointInfo();
+            if (key === 'innerSingularity') html = innerInfo();
+            if (key === 'wholeLine') html = wholeLineInfo();
+
+            const info = document.getElementById('info');
+            if (window.MathJax && MathJax.typesetClear) MathJax.typesetClear([info]);
+            info.innerHTML = html;
+            queueDynamicTypeset();
+        }
+
+        function updateAll() {
+            updateInformation();
+            if (leftBoard) leftBoard.update();
+            if (rightBoard) rightBoard.update();
+            if (controlBoard) controlBoard.update();
+        }
+
+        function buildAll() {
+            buildControls();
+            buildVisualizations();
+            updateAll();
+        }
+
+        buildAll();
+    </script>
+</body>
+
+</html>

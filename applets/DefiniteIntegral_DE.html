@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Bestimmtes Integral – JSXGraph</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <!-- MathJax -->
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
+
+    <!-- nerdamer für symbolische Integration -->
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.11/nerdamer.core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.11/Calculus.min.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        #jxgbox {
+            width: 900px;
+            height: 550px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+        }
+
+        #intro {
+            width: 900px;
+            margin: 20px auto 10px auto;
+        }
+
+        #explanation {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro">
+        <h2 style="margin-bottom: 8px;">Das bestimmte Integral als Flächeninhalt</h2>
+        <div id="explanation" style="
+        padding: 12px 16px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #f9f9f9;
+        font-size: 14px;
+        line-height: 1.45;
+    ">
+            <p>
+                Mit dieser interaktiven Ansicht kannst du selbst entdecken, wie das
+                <strong>bestimmte Integral</strong> \(\displaystyle \int_a^b f(x)\,\mathrm{d}x\)
+                mit Flächen unter dem Graphen einer Funktion zusammenhängt.
+            </p>
+
+            <p><strong>Deine Aufgabe:</strong> Beobachte, experimentiere und formuliere eigene Vermutungen.</p>
+
+            <ul>
+                <li style="margin-bottom: 12px;">
+                    <strong>Wähle eine Funktion \(f(x)\).</strong><br>
+                    Probiere alle drei Möglichkeiten aus: überall positiv, überall negativ oder kubisch
+                    (mit positiven und negativen Teilen).
+                </li>
+
+                <li style="margin-bottom: 12px;">
+                    <strong>Verschiebe die Punkte \(a\) und \(b\) auf der \(x\)-Achse.</strong><br>
+                    Wie verändert sich der hervorgehobene Bereich zwischen \(x = a\) und \(x = b\)?
+                    Wie verändert sich der angezeigte Integralwert?
+                </li>
+
+                <li style="margin-bottom: 12px;">
+                    <strong>Achte auf die Farben:</strong><br>
+                    Der Bereich ist <span style="color:red;">rot</span>, wenn der Graph über der x-Achse liegt
+                    (\(f(x) &gt; 0\)), und <span style="color:blue;">blau</span>, wenn er darunter liegt
+                    (\(f(x) &lt; 0\)).<br>
+                    <em>Wie beeinflussen rote und blaue Bereiche den Wert des Integrals?</em>
+                </li>
+
+                <li style="margin-bottom: 12px;">
+                    <strong>Untersuche besondere Situationen:</strong>
+                    <ul>
+                        <li>Was passiert, wenn \(a = b\)?</li>
+                        <li>Was passiert, wenn du das Intervall nach links oder rechts verschiebst?</li>
+                        <li>Was passiert, wenn das Intervall teils rot und teils blau ist?</li>
+                    </ul>
+                </li>
+
+                <li style="margin-bottom: 12px;">
+                    <strong>Nutze die kubische Funktion.</strong><br>
+                    Sie hat Bereiche über und unter der x-Achse.
+                    <em>Wie setzt sich der Integralwert aus roten (positiven) und blauen (negativen)
+                        Flächen zusammen?</em>
+                </li>
+
+                <li style="margin-bottom: 12px;">
+                    <strong>Suche nach Mustern:</strong><br>
+                    Wird der Integralwert grösser oder kleiner, wenn du das Intervall vergrösserst?
+                    Was passiert, wenn du nur rote oder nur blaue Bereiche einschliesst?
+                </li>
+            </ul>
+
+            <p>
+                Versuche zum Schluss in deinen eigenen Worten zu beschreiben:<br>
+                <em>Was sagt der Wert des bestimmten Integrals \(\displaystyle \int_a^b f(x)\,\mathrm{d}x\)
+                    über die farbige Fläche aus?</em>
+            </p>
+        </div>
+    </div>
+
+
+    <div id="jxgbox" class="jxgbox"></div>
+
+    <script>
+        JXG.Options.text.useMathJax = true;
+
+        // --- Board ---
+        const board = JXG.JSXGraph.initBoard('jxgbox', {
+            boundingbox: [-6.5, 5.5, 6.5, -5.5],
+            axis: true,
+            showNavigation: true,
+            showCopyright: false
+        });
+
+        // Creative Commons signature (watermark)
+        const CCsignature = board.create('text', [
+            function () {
+                const bb = board.getBoundingBox();
+                const xmin = bb[0], xmax = bb[2];
+                return xmin + 0.01 * (xmax - xmin);
+            },
+            function () {
+                const bb = board.getBoundingBox();
+                const ymin = bb[3], ymax = bb[1];
+                return ymin + 0.01 * (ymax - ymin);
+            },
+            '© 2025 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            strokeColor: '#666',
+            opacity: 0.6,
+            highlight: false
+        });
+
+        const xMinDomain = -6;
+        const xMaxDomain = 6;
+
+        // --- Funktionen-Definitionen ---
+        const functions = {
+            positive: {
+                expr: 'x^2+1',
+                latex: 'x^2+1',
+                beschreibung: 'überall positiv'
+            },
+            negative: {
+                expr: '-(x^2+1)',
+                latex: '-(x^2+1)',
+                beschreibung: 'überall negativ'
+            },
+            cubic: {
+                expr: '(x+2)*x*(x-2)',
+                latex: '(x+2)x(x-2)',
+                beschreibung: 'kubische Funktion mit positiven und negativen Teilen'
+            }
+        };
+
+        let currentFuncId = 'positive';
+        let funf = null;      // numerische JS-Funktion f(x)
+        let funGraph = null;  // functiongraph-Objekt
+
+        // Flächen-Polygone für positive und negative Bereiche
+        let posAreaPolys = [];
+        let negAreaPolys = [];
+
+        // Integralwert
+        let integralVal = NaN;
+
+        // Dropdown: Funktion wählen (HTML inside JSXGraph)
+        const funcDropdown = board.create('text', [
+            -6.2,
+            5.3,
+            '<span style="font-size:12px; margin-right:6px;"><strong>Funktion:</strong></span>' +
+            '<select id="funcSelectOnBoard" style="font-size:12px;">' +
+            '<option value="positive"> überall positiv</option>' +
+            '<option value="negative"> überall negativ</option>' +
+            '<option value="cubic"> kubisch mit Vorzeichenwechsel</option>' +
+            '</select>'
+        ], {
+            display: 'html',
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true,
+            frozen: true
+        });
+
+        const latexFunctionText = board.create('text', [
+            -6.2, 4.7,
+            function () {
+                const id = currentFuncId;
+                if (id === 'positive') return '\\(f(x) = x^2 + 1\\)';
+                if (id === 'negative') return '\\(f(x) = -(x^2 + 1)\\)';
+                if (id === 'cubic') return '\\(f(x) = (x+2)x(x-2)\\)';
+                return '';
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: 'black',
+            fixed: true
+        });
+
+        setTimeout(function () {
+            const select = document.getElementById('funcSelectOnBoard');
+            if (select) {
+                select.addEventListener('change', function () {
+                    currentFuncId = this.value;
+
+                    // redraw
+                    parseAndPlotFunction();
+
+                    // redraw the LaTeX label
+                    board.update();
+                });
+            }
+        }, 0);
+
+
+        // Event listener for the HTML dropdown on the board
+        // (slight delay to ensure JSXGraph injected the HTML)
+        setTimeout(function () {
+            const select = document.getElementById('funcSelectOnBoard');
+            if (select) {
+                select.addEventListener('change', function () {
+                    currentFuncId = this.value;
+                    parseAndPlotFunction();   // redraw everything
+                });
+            }
+        }, 0);
+
+        // --- Punkte a und b auf der x-Achse ---
+        const aPoint = board.create('glider', [-2, 0, board.defaultAxes.x], {
+            name: 'a',
+            size: 4,
+            strokeColor: 'black',
+            fillColor: 'white'
+        });
+
+        const bPoint = board.create('glider', [2, 0, board.defaultAxes.x], {
+            name: 'b',
+            size: 4,
+            strokeColor: 'black',
+            fillColor: 'white'
+        });
+
+        // vertikale gestrichelte Linien bei x=a und x=b
+        const lineA = board.create('line', [
+            () => [aPoint.X(), -100],
+            () => [aPoint.X(), 100]
+        ], {
+            straightFirst: false,
+            straightLast: false,
+            strokeColor: '#555',
+            dash: 2,
+            strokeWidth: 1
+        });
+
+        const lineB = board.create('line', [
+            () => [bPoint.X(), -100],
+            () => [bPoint.X(), 100]
+        ], {
+            straightFirst: false,
+            straightLast: false,
+            strokeColor: '#555',
+            dash: 2,
+            strokeWidth: 1
+        });
+
+        const intervalSeg = board.create('segment', [aPoint, bPoint], {
+            strokeColor: 'black',
+            strokeWidth: 2
+        });
+
+        // --- Hilfsfunktionen ---
+
+        function clearAreaPolys(arr) {
+            for (let i = 0; i < arr.length; i++) {
+                board.removeObject(arr[i]);
+            }
+            arr.length = 0;
+        }
+
+        // Polygone für Bereiche mit konstantem Vorzeichen von f(x) auf [a,b]
+        function createSignedAreaPolygons(a, b) {
+            if (!funf || b <= a) return;
+
+            const N = 200;
+            const xs = [];
+            const ys = [];
+            const h = (b - a) / N;
+
+            for (let i = 0; i <= N; i++) {
+                const x = a + i * h;
+                xs.push(x);
+                ys.push(funf(x));
+            }
+
+            const blocks = []; // { sign: +1/-1, iStart, iEnd }
+            let currentSign = 0;
+            let startIndex = null;
+
+            function signOf(y) {
+                if (!isFinite(y) || Math.abs(y) < 1e-6) return 0;
+                return y > 0 ? 1 : -1;
+            }
+
+            for (let i = 0; i < N; i++) {
+                const xm = 0.5 * (xs[i] + xs[i + 1]);
+                const ym = funf(xm);
+                const s = signOf(ym);
+
+                if (s === 0) {
+                    if (currentSign !== 0) {
+                        blocks.push({ sign: currentSign, iStart: startIndex, iEnd: i - 1 });
+                        currentSign = 0;
+                        startIndex = null;
+                    }
+                    continue;
+                }
+
+                if (currentSign === 0) {
+                    currentSign = s;
+                    startIndex = i;
+                } else if (currentSign !== s) {
+                    blocks.push({ sign: currentSign, iStart: startIndex, iEnd: i - 1 });
+                    currentSign = s;
+                    startIndex = i;
+                }
+            }
+
+            if (currentSign !== 0 && startIndex !== null) {
+                blocks.push({ sign: currentSign, iStart: startIndex, iEnd: N - 1 });
+            }
+
+            blocks.forEach(block => {
+                const sign = block.sign;
+                const iStart = block.iStart;
+                const iEnd = block.iEnd;
+                if (iStart === null || iEnd === null || iEnd < iStart) return;
+
+                const points = [];
+
+                // Entlang der x-Achse von links nach rechts
+                for (let k = iStart; k <= iEnd + 1; k++) {
+                    points.push([xs[k], 0]);
+                }
+
+                // Entlang des Graphen zurück
+                for (let k = iEnd + 1; k >= iStart; k--) {
+                    const x = xs[k];
+                    const y = funf(x);
+                    if (!isFinite(y)) continue;
+                    points.push([x, y]);
+                }
+
+                const poly = board.create('polygon', points, {
+                    withLines: false,
+                    borders: { visible: false },
+                    fillColor: sign > 0 ? 'red' : 'blue',
+                    fillOpacity: 0.35,
+                    highlight: false,
+                    fixed: true,
+                    layer: 1,
+                    vertices: { visible: false }
+                });
+
+                if (sign > 0) {
+                    posAreaPolys.push(poly);
+                } else {
+                    negAreaPolys.push(poly);
+                }
+            });
+        }
+
+        // Symbolische / numerische Berechnung von ∫_a^b f(x) dx
+        function computeIntegral() {
+            if (!funf) return NaN;
+
+            const a = Math.min(aPoint.X(), bPoint.X());
+            const b = Math.max(aPoint.X(), bPoint.X());
+            if (!(isFinite(a) && isFinite(b)) || a === b) return 0;
+
+            const expr = functions[currentFuncId].expr;
+
+            try {
+                const F = nerdamer.integrate(expr, 'x');
+                const Fb = Number(nerdamer(F).evaluate({ x: b }).text());
+                const Fa = Number(nerdamer(F).evaluate({ x: a }).text());
+                if (isFinite(Fb) && isFinite(Fa)) {
+                    return Fb - Fa;
+                }
+            } catch (e) {
+                console.warn('Symbolische Integration fehlgeschlagen:', e);
+            }
+
+            const N = 400;
+            const h = (b - a) / N;
+            let area = 0;
+            for (let i = 0; i < N; i++) {
+                const xL = a + i * h;
+                const xR = xL + h;
+                const yL = funf(xL);
+                const yR = funf(xR);
+                if (isFinite(yL) && isFinite(yR)) {
+                    area += 0.5 * (yL + yR) * h;
+                }
+            }
+            return area;
+        }
+
+        function parseAndPlotFunction() {
+            const expr = functions[currentFuncId].expr;
+
+            try {
+                funf = board.jc.snippet(expr, true, 'x', false);
+            } catch (e) {
+                alert('Funktion kann nicht geparst werden.');
+                return;
+            }
+
+            if (funGraph) {
+                board.removeObject(funGraph);
+                funGraph = null;
+            }
+
+            funGraph = board.create('functiongraph', [
+                funf,
+                xMinDomain,
+                xMaxDomain
+            ], {
+                strokeColor: 'black',
+                strokeWidth: 2
+            });
+
+            rebuildAreasAndIntegral();
+        }
+
+        function rebuildAreasAndIntegral() {
+            clearAreaPolys(posAreaPolys);
+            clearAreaPolys(negAreaPolys);
+
+            const a = Math.min(aPoint.X(), bPoint.X());
+            const b = Math.max(aPoint.X(), bPoint.X());
+
+            if (b > a && funf) {
+                createSignedAreaPolygons(a, b);
+            }
+
+            integralVal = computeIntegral();
+            board.update();
+        }
+
+        // --- Texte ---
+
+        const integralText = board.create('text', [
+            function () { return Math.max(aPoint.X(), bPoint.X()) + 0.8; },
+            4.8,
+            function () {
+                if (!isFinite(integralVal)) return '';
+                const a = Math.min(aPoint.X(), bPoint.X());
+                const b = Math.max(aPoint.X(), bPoint.X());
+                const fLatex = functions[currentFuncId].latex;
+                return '\\(\\displaystyle\\int_{' + a.toFixed(2) + '}^{' + b.toFixed(2) + '} ' +
+                    fLatex + '\\,dx = ' + integralVal.toFixed(2) + '\\)';
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: 'black'
+        });
+
+        const areaText = board.create('text', [
+            function () {
+                const a = Math.min(aPoint.X(), bPoint.X());
+                const b = Math.max(aPoint.X(), bPoint.X());
+                return (a + b) / 2;
+            },
+            function () {
+                if (!funf) return 0;
+                const a = Math.min(aPoint.X(), bPoint.X());
+                const b = Math.max(aPoint.X(), bPoint.X());
+                const mid = (a + b) / 2;
+                const yMid = funf(mid);
+                return yMid / 2;
+            },
+            function () {
+                if (!isFinite(integralVal)) return '';
+                if (currentFuncId === 'cubic') return '';
+                const areaVal = Math.abs(integralVal);
+                return '\\(\\text{Fläche} = ' + areaVal.toFixed(2) + '\\)';
+            }
+        ], {
+            anchorX: 'middle',
+            anchorY: 'middle',
+            strokeColor: '#003366'
+        });
+
+        // --- Events ---
+
+        aPoint.on('drag', rebuildAreasAndIntegral);
+        bPoint.on('drag', rebuildAreasAndIntegral);
+
+        // Initial
+        parseAndPlotFunction();
+    </script>
+
+</body>
+
+</html>

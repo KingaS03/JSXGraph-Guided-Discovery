@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Konsumenten- und Produzentenrente – JSXGraph</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <!-- MathJax -->
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
+
+    <!-- nerdamer für symbolische Integration -->
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.11/nerdamer.core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.11/Calculus.min.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        #jxgbox {
+            width: 900px;
+            height: 550px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+        }
+
+        #intro {
+            width: 900px;
+            margin: 20px auto 10px auto;
+        }
+
+        #explanation {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro">
+        <h2 style="margin-bottom: 8px;">Konsumenten- und Produzentenrente</h2>
+        <div id="explanation">
+            <p>
+                In dieser interaktiven Grafik kannst du die Begriffe
+                <strong>Konsumentenrente</strong> (KR) und <strong>Produzentenrente</strong> (PR)
+                anhand eines einfachen Angebots-Nachfrage-Modells untersuchen.
+            </p>
+            <ul>
+                <li style="margin-bottom: 10px;">
+                    Die <strong>Nachfragefunktion</strong> \(f(Q)\) ist fallend, die
+                    <strong>Angebotsfunktion</strong> \(g(Q)\) ist steigend.
+                </li>
+                <li style="margin-bottom: 10px;">
+                    Die <span style="color:green;">grün</span> markierte Fläche zeigt die
+                    <strong>Konsumentenrente</strong>:
+                    den Bereich zwischen der Nachfragefunktion und der Waagerechten \(P = P_0\)
+                    im Intervall \(Q \in [0, Q_0]\).
+                </li>
+                <li style="margin-bottom: 10px;">
+                    Die <span style="color:magenta;">magenta</span> markierte Fläche zeigt die
+                    <strong>Produzentenrente</strong>:
+                    den Bereich zwischen der Waagerechten \(P = P_0\) und der Angebotsfunktion
+                    im Intervall \(Q \in [0, Q_0]\).
+                </li>
+                <li style="margin-bottom: 10px;">
+                    Rechts oben siehst du die aktuellen Werte von
+                    \(\text{KR}\), \(\text{PR}\) und \(\text{KR}+\text{PR}\).
+                </li>
+            </ul>
+            <p>
+                Überlege zum Schluss: Wie reagieren die Flächen und Werte von KR, PR und ihrer Summe,
+                wenn du den Punkt \((Q_0, P_0)\) bewegst? Und bei welchem Punkt erreichst du die
+                grösste Gesamtsumme?
+            </p>
+        </div>
+    </div>
+
+    <div id="jxgbox" class="jxgbox"></div>
+
+    <script>
+        JXG.Options.text.useMathJax = true;
+
+        // --- Board ---
+        const board = JXG.JSXGraph.initBoard('jxgbox', {
+            boundingbox: [-1, 14, 11, -1], // [x_min, y_max, x_max, y_min]
+            axis: true,
+            showNavigation: true,
+            showCopyright: false
+        });
+
+        // Creative Commons Signatur (Wasserzeichen)
+        const CCsignature = board.create('text', [
+            function () {
+                const bb = board.getBoundingBox();
+                const xmin = bb[0], xmax = bb[2];
+                return xmin + 0.01 * (xmax - xmin);
+            },
+            function () {
+                const bb = board.getBoundingBox();
+                const ymin = bb[3], ymax = bb[1];
+                return ymin + 0.01 * (ymax - ymin);
+            },
+            '© 2025 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            strokeColor: '#666',
+            opacity: 0.6,
+            highlight: false
+        });
+
+        // --- Funktionen: Nachfrage und Angebot ---
+        // Nachfrage: f(Q) = 10 - 0.5 Q  (fallend)
+        // Angebot:   g(Q) = 2 + 0.1 Q  (steigend)
+        const qMin = 0;
+        const qMax = 10;
+
+        /*function demand(q) {
+            return 10 - 0.5 * q;
+        }*/
+
+        function supply(q) {
+            return 2 + 0.25 * q;
+        }
+
+        function demand(q) {
+            return 12 - 0.2 * q * q;
+        }
+        /*const demandExpr = '12 - 0.2*q^2';*/
+
+        // Funktiongraphen
+        const demandGraph = board.create('functiongraph', [demand, qMin, qMax], {
+            strokeColor: '#0066cc',
+            strokeWidth: 2,
+            name: 'Nachfrage',
+            withLabel: true
+        });
+
+        const supplyGraph = board.create('functiongraph', [supply, qMin, qMax], {
+            strokeColor: 'red',
+            strokeWidth: 2,
+            name: 'Angebot',
+            withLabel: true
+        });
+
+        // --- Gleiterpunkt (Q0, P0) auf der Nachfragefunktion ---
+        // 1. Create the glider normally on the demandGraph
+        const qpGlider = board.create('glider', [4, demand(4), demandGraph], {
+            name: (self) => '\\((Q_0, P_0) = (' + self.X().toFixed(2) +', ' + self.Y().toFixed(2) + ')\\)',          // no static name
+            withLabel: true,
+            size: 4,
+            strokeColor: 'black',
+            fillColor: 'white'
+        });
+
+        /*
+        // 2. Make the label text depend on Q0 and P0
+        qpGlider.label.setText(function () {
+            const Q0 = qpGlider.X();
+            const P0 = qpGlider.Y();
+            return '\\((Q_0, P_0) = (' + Q0.toFixed(2) +
+                ', ' + P0.toFixed(2) + ')\\)';
+        });
+
+        // 3. Optional: adjust label position
+        qpGlider.label.setAttribute({
+            anchorX: 'left',
+            anchorY: 'top',
+            offset: [8, 8]    // pixel offset from the point
+        });*/
+
+        // Projektionen: gestrichelte Linien auf Q-Achse und P-Achse
+        const vProj = board.create('segment', [
+            function () { return [qpGlider.X(), 0]; },
+            function () { return [qpGlider.X(), qpGlider.Y()]; }
+        ], {
+            strokeColor: '#555',
+            dash: 2,
+            strokeWidth: 1
+        });
+
+        const hProj = board.create('segment', [
+            function () { return [0, qpGlider.Y()]; },
+            function () { return [qpGlider.X(), qpGlider.Y()]; }
+        ], {
+            strokeColor: '#555',
+            dash: 2,
+            strokeWidth: 1
+        });
+
+        // Achsenbeschriftungen Q0 und P0 (dynamisch)
+        const q0Label = board.create('text', [
+            function () { return qpGlider.X(); },
+            -0.4,
+            '\\(Q_0\\)'
+        ], {
+            anchorX: 'middle',
+            anchorY: 'top',
+            strokeColor: 'black'
+        });
+
+        const p0Label = board.create('text', [
+            -0.4,
+            function () { return qpGlider.Y(); },
+            '\\(P_0\\)'
+        ], {
+            anchorX: 'right',
+            anchorY: 'middle',
+            strokeColor: 'black'
+        });
+
+        // --- Symbolische Integrale mit nerdamer ---
+        const demandExpr = '12-0.2*q*q';
+        const supplyExpr = '2+0.25*q';
+
+        // Stammfunktionen F(q) und G(q)
+        const F_demand = nerdamer.integrate(demandExpr, 'q'); // ∫ f(q) dq
+        const G_supply = nerdamer.integrate(supplyExpr, 'q'); // ∫ g(q) dq
+
+        function evalNerd(expr, qVal) {
+            return Number(nerdamer(expr).evaluate({ q: qVal }).text());
+        }
+
+        // --- Flächen (Polygone) für KR und PR ---
+        let krPoly = null;
+        let prPoly = null;
+
+        let krVal = 0;
+        let prVal = 0;
+
+        function rebuildAreasAndValues() {
+            const Q0 = qpGlider.X();
+            const P0 = qpGlider.Y();
+
+            if (Q0 <= 0 || !isFinite(Q0) || !isFinite(P0)) {
+                krVal = 0;
+                prVal = 0;
+                if (krPoly) { board.removeObject(krPoly); krPoly = null; }
+                if (prPoly) { board.removeObject(prPoly); prPoly = null; }
+                board.update();
+                return;
+            }
+
+            // Alte Polygone entfernen
+            if (krPoly) {
+                board.removeObject(krPoly);
+                krPoly = null;
+            }
+            if (prPoly) {
+                board.removeObject(prPoly);
+                prPoly = null;
+            }
+
+            const N = 200;
+            const h = Q0 / N;
+
+            // --- Konsumentenrente: Fläche zwischen Nachfrage und P = P0 ---
+            const krPoints = [];
+
+            // Obere Randkurve: Nachfrage f(q) von 0 bis Q0
+            for (let i = 0; i <= N; i++) {
+                const q = i * h;
+                krPoints.push([q, demand(q)]);
+            }
+            // Untere Randkurve: Waagerechte P = P0 zurück von Q0 nach 0
+            for (let i = N; i >= 0; i--) {
+                const q = i * h;
+                krPoints.push([q, P0]);
+            }
+
+            krPoly = board.create('polygon', krPoints, {
+                withLines: false,
+                borders: { visible: false },
+                fillColor: 'green',
+                fillOpacity: 0.35,
+                highlight: false,
+                vertices: { visible: false }
+            });
+
+            const krLabel = board.create('text', [
+                function () {
+                    // Mittelpunkt im Intervall [0, Q0]
+                    return qpGlider.X() / 3;
+                },
+                function () {
+                    // Vertikaler Mittelpunkt zwischen Nachfrage und Preislinie
+                    const qMid = qpGlider.X() / 3;
+                    return (demand(qMid) + qpGlider.Y()) / 2;
+                },
+                'KR'   // nur reiner Text, kein HTML
+            ], {
+                anchorX: 'middle',
+                anchorY: 'middle',
+                strokeColor: 'green',   // Textfarbe
+                fontSize: 16,
+                fontWeight: 'bold',
+                fixed: true
+            });
+
+            // --- Produzentenrente: Fläche zwischen P = P0 und Angebot ---
+            const prPoints = [];
+
+            // Obere Randkurve: Waagerechte P = P0 von 0 bis Q0
+            for (let i = 0; i <= N; i++) {
+                const q = i * h;
+                prPoints.push([q, P0]);
+            }
+            // Untere Randkurve: Angebotsfunktion g(q) zurück von Q0 nach 0
+            for (let i = N; i >= 0; i--) {
+                const q = i * h;
+                prPoints.push([q, supply(q)]);
+            }
+
+            prPoly = board.create('polygon', prPoints, {
+                withLines: false,
+                borders: { visible: false },
+                fillColor: 'magenta',
+                fillOpacity: 0.35,
+                highlight: false,
+                vertices: { visible: false }
+            });
+
+            const prLabel = board.create('text', [
+                function () {
+                    // Mittelpunkt im Intervall [0, Q0]
+                    return qpGlider.X() / 3;
+                },
+                function () {
+                    // Vertikaler Mittelpunkt zwischen Angebotskurve und Preislinie
+                    const qMid = qpGlider.X() / 3;
+                    return (supply(qMid) + qpGlider.Y()) / 2;
+                },
+                'PR'   // wieder nur Text
+            ], {
+                anchorX: 'middle',
+                anchorY: 'middle',
+                strokeColor: 'magenta', // Textfarbe
+                fontSize: 16,
+                fontWeight: 'bold',
+                fixed: true
+            });
+
+
+            // --- Werte von KR und PR symbolisch berechnen ---
+            // KR(Q0) = ∫_0^{Q0} (f(q) - P0) dq
+            //        = [F_demand(Q0) - F_demand(0)] - P0 * Q0
+            const F_Q0 = evalNerd(F_demand, Q0);
+            const F_0 = evalNerd(F_demand, 0);
+            krVal = (F_Q0 - F_0) - P0 * Q0;
+
+            // PR(Q0) = ∫_0^{Q0} (P0 - g(q)) dq
+            //        = P0 * Q0 - [G_supply(Q0) - G_supply(0)]
+            const G_Q0 = evalNerd(G_supply, Q0);
+            const G_0 = evalNerd(G_supply, 0);
+            prVal = P0 * Q0 - (G_Q0 - G_0);
+
+            board.update();
+        }
+
+        // --- Textanzeige für KR, PR und Summe ---
+        const surplusText = board.create('text', [
+            6.2,
+            13.0,
+            function () {
+                if (!isFinite(krVal) || !isFinite(prVal)) return '';
+
+                const sum = krVal + prVal;
+
+                return (
+                    '<b>Zufriedenheit der Kunden:</b> KR \\(= ' + krVal.toFixed(2) + '\\)<br><br>' +
+                    '<b>Zufriedenheit des Herstellers:</b> PR \\(= ' + prVal.toFixed(2) + '\\)<br><br>' +
+                    '<b>Gesamtzufriedenheit:</b> KR + PR \\(= ' + sum.toFixed(2) + '\\)'
+                );
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: 'black',
+            display: 'html',
+            fontSize: 14
+        });
+
+
+        // --- Events ---
+        qpGlider.on('drag', rebuildAreasAndValues);
+
+        // Initialer Aufbau
+        rebuildAreasAndValues();
+    </script>
+
+</body>
+
+</html>

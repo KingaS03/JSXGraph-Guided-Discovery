@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monotonie und Vorzeichen der Ableitung – JSXGraph</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            color: #222;
+            margin: 0;
+        }
+
+        #intro,
+        #board,
+        #info {
+            width: min(900px, calc(100vw - 32px));
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        #intro {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #intro h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        #explanation,
+        #info {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        #explanation p:first-child,
+        #info p:first-child {
+            margin-top: 0;
+        }
+
+        #explanation ol {
+            margin-bottom: 0;
+            padding-left: 24px;
+        }
+
+        #explanation li + li {
+            margin-top: 5px;
+        }
+
+        #board {
+            height: min(650px, 78vw);
+            min-height: 500px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+
+        #info {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        #info p:last-child {
+            margin-bottom: 0;
+        }
+
+        .status {
+            display: none;
+            margin-bottom: 0;
+        }
+
+        .legend {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-right: 14px;
+            white-space: nowrap;
+        }
+
+        .legend-line {
+            display: inline-block;
+            width: 24px;
+            border-top: 2px solid;
+        }
+
+        .legend-line.blue {
+            border-color: #2166ac;
+        }
+
+        .legend-line.green {
+            border-color: #1b9e77;
+        }
+
+        .legend-line.orange {
+            border-color: #e66101;
+        }
+
+        .legend-line.orange-dashed {
+            border-color: #e66101;
+            border-top-style: dashed;
+        }
+
+        .JXGtext,
+        .JXGinput,
+        .JXGbutton {
+            font-family: sans-serif !important;
+        }
+
+        @media (max-width: 650px) {
+            #board {
+                height: 520px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro">
+        <h2>Monotonie und Vorzeichen der Ableitung</h2>
+
+        <div id="explanation">
+            <p>
+                In dieser Ansicht kannst du untersuchen, wie die Steigung der
+                Tangente, das Vorzeichen von \(f'(x)\) und das Monotonieverhalten
+                von \(f\) zusammenhängen.
+            </p>
+
+            <p>
+                Gib eine differenzierbare Funktion \(f(x)\) ein und aktualisiere
+                den Graphen. Verschiebe anschliessend \(x_0\) auf der
+                \(x\)-Achse. Die grüne Tangente und der orange Punkt
+                \((x_0,f'(x_0))\) werden dabei laufend aktualisiert. Aus den
+                besuchten Punkten entsteht schrittweise der Graph von \(f'\).
+            </p>
+
+            <p><strong>Untersuche:</strong></p>
+
+            <ol>
+                <li>
+                    Welches Vorzeichen hat \(f'(x_0)\), wenn der Graph von \(f\)
+                    steigt beziehungsweise fällt?
+                </li>
+                <li>
+                    An welchen Stellen ist die Tangente horizontal? Vergleiche
+                    diese Stellen mit den lokalen Extremstellen von \(f\).
+                </li>
+                <li>
+                    Bewege \(x_0\) von links nach rechts und formuliere eine
+                    Vermutung über den Graphen von \(f'\). Blende ihn danach
+                    vollständig ein.
+                </li>
+                <li>
+                    Untersuche zusätzlich \(f(x)=x^3\). Folgt aus
+                    \(f'(x_0)=0\) immer, dass \(f\) bei \(x_0\) ein lokales
+                    Extremum besitzt?
+                </li>
+                <li>
+                    Formuliere einen Zusammenhang zwischen dem Vorzeichen von
+                    \(f'\) auf einem Intervall und der Monotonie von \(f\) auf
+                    diesem Intervall.
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="board"
+         class="jxgbox"
+         aria-label="Interaktive Darstellung von Funktion, Tangente und Ableitung"></div>
+
+    <div id="info">
+        <p>
+            <strong>Aktuelle Position</strong><br>
+            \(x_0=\)<span id="xValue">0.00</span>,
+            \(f(x_0)=\)<span id="fValue">0.00</span><br>
+            Steigung der Tangente:
+            \(f'(x_0)=\)<span id="dfValue">0.00</span>
+        </p>
+
+        <p>
+            <span class="legend">
+                <span class="legend-line blue"></span>
+                Graph von \(f\)
+            </span>
+            <span class="legend">
+                <span class="legend-line green"></span>
+                Tangente
+            </span>
+            <span class="legend">
+                <span class="legend-line orange"></span>
+                aufgebaute Spur von \(f'\)
+            </span>
+            <span class="legend">
+                <span class="legend-line orange-dashed"></span>
+                vollständiger Graph von \(f'\)
+            </span>
+        </p>
+
+        <p id="statusPositive" class="status">
+            Die Tangente hat an \(x_0\) eine positive Steigung.
+            Gilt \(f'(x)>0\) auf einem ganzen Intervall, so ist \(f\)
+            auf diesem Intervall streng wachsend.
+        </p>
+
+        <p id="statusNegative" class="status">
+            Die Tangente hat an \(x_0\) eine negative Steigung.
+            Gilt \(f'(x)<0\) auf einem ganzen Intervall, so ist \(f\)
+            auf diesem Intervall streng fallend.
+        </p>
+
+        <p id="statusZero" class="status">
+            Die Tangente ist an \(x_0\) horizontal. Aus
+            \(f'(x_0)=0\) allein folgt jedoch noch nicht, dass \(f\)
+            dort ein lokales Extremum besitzt.
+        </p>
+
+        <p id="statusUndefined" class="status">
+            Die Ableitung \(f'(x_0)\) ist an dieser Stelle nicht definiert.
+        </p>
+    </div>
+
+    <script>
+        'use strict';
+
+        JXG.Options.text.useMathJax = true;
+
+        const board = JXG.JSXGraph.initBoard('board', {
+            boundingbox: [-6, 5.5, 6, -3.2],
+            axis: true,
+            keepaspectratio: true,
+            showCopyright: false,
+            showNavigation: false
+        });
+
+        const signature = board.create('text', [
+            function () {
+                return board.getBoundingBox()[0] + 0.12;
+            },
+            function () {
+                return board.getBoundingBox()[3] + 0.12;
+            },
+            '© 2026 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            highlight: false,
+            strokeColor: '#666',
+            opacity: 0.6,
+            layer: 10
+        });
+
+        const functionLabel = board.create('text', [
+            -5.45,
+            4.85,
+            '\\(f(x)=\\)'
+        ], {
+            fixed: true,
+            frozen: true,
+            highlight: false,
+            anchorX: 'left'
+        });
+
+        const functionInput = board.create('input', [
+            -4.55,
+            4.85,
+            '0.25*x^3-1.5*x',
+            ''
+        ], {
+            cssStyle: 'width: 165px;',
+            frozen: true,
+            anchorX: 'left'
+        });
+
+        const updateButton = board.create('button', [
+            -1.45,
+            4.85,
+            'Funktion aktualisieren',
+            function () {
+                updateFunction();
+            }
+        ], {
+            cssStyle: 'padding: 4px;',
+            frozen: true,
+            anchorX: 'left'
+        });
+
+        const showDerivative = board.create('checkbox', [
+            -5.45,
+            3.95,
+            'vollständigen Ableitungsgraphen anzeigen'
+        ], {
+            checked: false,
+            fixed: true,
+            frozen: true
+        });
+
+        const clearButton = board.create('button', [
+            -0.55,
+            3.95,
+            'Spur löschen',
+            function () {
+                clearTrace();
+            }
+        ], {
+            cssStyle: 'padding: 4px;',
+            frozen: true,
+            anchorX: 'left'
+        });
+
+        const gliderDomain = board.create('segment', [
+            [-2.6, 0],
+            [2.6, 0]
+        ], {
+            visible: false,
+            fixed: true
+        });
+
+        const xGlider = board.create('glider', [
+            0,
+            0,
+            gliderDomain
+        ], {
+            name: '\\(x_0\\)',
+            size: 4,
+            strokeColor: '#222',
+            fillColor: '#fff',
+            showInfobox: false,
+            label: {
+                offset: [0, 14]
+            },
+            layer: 9
+        });
+
+        let f = null;
+        let df = null;
+        let graphF = null;
+        let graphDF = null;
+        let pointF = null;
+        let derivativePoint = null;
+        let tangentAtF = null;
+
+        const traceXs = [];
+        const traceYs = [];
+
+        const derivativeTrace = board.create('curve', [
+            traceXs,
+            traceYs
+        ], {
+            strokeColor: '#e66101',
+            strokeWidth: 3,
+            fixed: true,
+            highlight: false,
+            layer: 7
+        });
+
+        const xValue = document.getElementById('xValue');
+        const fValue = document.getElementById('fValue');
+        const dfValue = document.getElementById('dfValue');
+
+        const statusElements = {
+            positive: document.getElementById('statusPositive'),
+            negative: document.getElementById('statusNegative'),
+            zero: document.getElementById('statusZero'),
+            undefined: document.getElementById('statusUndefined')
+        };
+
+        function hideAllStatusMessages() {
+            Object.keys(statusElements).forEach(function (key) {
+                statusElements[key].style.display = 'none';
+            });
+        }
+
+        function parseFunction() {
+            const expression = functionInput.Value();
+
+            try {
+                f = board.jc.snippet(expression, true, 'x', false);
+                df = JXG.Math.Numerics.D(f);
+
+                const testValue = f(0);
+                const testDerivative = df(0);
+                if (!Number.isFinite(testValue) ||
+                    !Number.isFinite(testDerivative)) {
+                    throw new Error('Invalid function');
+                }
+            } catch (error) {
+                window.alert(
+                    'Die Funktion konnte nicht gelesen werden. ' +
+                    'Prüfe die Eingabe und verwende x als Variable.'
+                );
+                return false;
+            }
+
+            return true;
+        }
+
+        function createFunctionGraphs() {
+            if (graphF) {
+                board.removeObject(graphF);
+            }
+            if (graphDF) {
+                board.removeObject(graphDF);
+            }
+
+            graphF = board.create('functiongraph', [
+                f,
+                -5.8,
+                5.8
+            ], {
+                strokeColor: '#2166ac',
+                strokeWidth: 2.5,
+                fixed: true,
+                highlight: false,
+                layer: 5
+            });
+
+            graphDF = board.create('functiongraph', [
+                df,
+                -5.8,
+                5.8
+            ], {
+                strokeColor: '#e66101',
+                strokeWidth: 2.5,
+                dash: 2,
+                visible: function () {
+                    return showDerivative.Value();
+                },
+                fixed: true,
+                highlight: false,
+                layer: 4
+            });
+        }
+
+        function createOrUpdateDynamicObjects() {
+            if (!pointF) {
+                pointF = board.create('point', [
+                    function () {
+                        return xGlider.X();
+                    },
+                    function () {
+                        return f(xGlider.X());
+                    }
+                ], {
+                    name: '\\(P=(x_0,f(x_0))\\)',
+                    size: 4,
+                    strokeColor: '#2166ac',
+                    fillColor: '#2166ac',
+                    fixed: true,
+                    highlight: false,
+                    showInfobox: false,
+                    label: {
+                        offset: [7, 8]
+                    },
+                    layer: 9
+                });
+            }
+
+            if (!derivativePoint) {
+                derivativePoint = board.create('point', [
+                    function () {
+                        return xGlider.X();
+                    },
+                    function () {
+                        return df(xGlider.X());
+                    }
+                ], {
+                    name: "\\((x_0,f'(x_0))\\)",
+                    size: 4,
+                    strokeColor: '#e66101',
+                    fillColor: '#e66101',
+                    fixed: true,
+                    highlight: false,
+                    showInfobox: false,
+                    label: {
+                        offset: [7, 8]
+                    },
+                    layer: 9
+                });
+            }
+
+            if (tangentAtF) {
+                board.removeObject(tangentAtF);
+            }
+
+            tangentAtF = board.create('tangent', [
+                pointF,
+                graphF
+            ], {
+                strokeColor: '#1b9e77',
+                strokeWidth: 2.5,
+                fixed: true,
+                highlight: false,
+                layer: 6
+            });
+        }
+
+        function clearTrace() {
+            traceXs.length = 0;
+            traceYs.length = 0;
+            addCurrentPointToTrace();
+            board.update();
+        }
+
+        function addCurrentPointToTrace() {
+            if (!df) {
+                return;
+            }
+
+            const x = xGlider.X();
+            const y = df(x);
+
+            if (!Number.isFinite(y)) {
+                return;
+            }
+
+            const tolerance = 0.025;
+            let index = 0;
+
+            while (index < traceXs.length && traceXs[index] < x) {
+                index += 1;
+            }
+
+            if (index < traceXs.length &&
+                Math.abs(traceXs[index] - x) < tolerance) {
+                traceXs[index] = x;
+                traceYs[index] = y;
+                return;
+            }
+
+            if (index > 0 &&
+                Math.abs(traceXs[index - 1] - x) < tolerance) {
+                traceXs[index - 1] = x;
+                traceYs[index - 1] = y;
+                return;
+            }
+
+            traceXs.splice(index, 0, x);
+            traceYs.splice(index, 0, y);
+        }
+
+        function updateInformation() {
+            const x = xGlider.X();
+            const y = f(x);
+            const slope = df(x);
+
+            xValue.textContent = Number.isFinite(x) ? x.toFixed(2) : '–';
+            fValue.textContent = Number.isFinite(y) ? y.toFixed(2) : '–';
+            dfValue.textContent =
+                Number.isFinite(slope) ? slope.toFixed(2) : 'nicht definiert';
+
+            hideAllStatusMessages();
+
+            if (!Number.isFinite(slope)) {
+                statusElements.undefined.style.display = 'block';
+                return;
+            }
+
+            const epsilon = 0.01;
+
+            if (Math.abs(slope) < epsilon) {
+                statusElements.zero.style.display = 'block';
+            } else if (slope > 0) {
+                statusElements.positive.style.display = 'block';
+            } else {
+                statusElements.negative.style.display = 'block';
+            }
+        }
+
+        function updateScene() {
+            addCurrentPointToTrace();
+            updateInformation();
+            board.update();
+        }
+
+        function updateFunction() {
+            if (!parseFunction()) {
+                return;
+            }
+
+            clearTrace();
+            createFunctionGraphs();
+            createOrUpdateDynamicObjects();
+            updateScene();
+        }
+
+        xGlider.on('drag', updateScene);
+        xGlider.on('up', updateScene);
+
+        JXG.addEvent(
+            showDerivative.rendNodeCheckbox,
+            'change',
+            function () {
+                board.update();
+            },
+            showDerivative
+        );
+
+        JXG.addEvent(
+            functionInput.rendNodeInput,
+            'keydown',
+            function (event) {
+                if (event.key === 'Enter') {
+                    updateFunction();
+                }
+            },
+            functionInput
+        );
+
+        if (parseFunction()) {
+            createFunctionGraphs();
+            createOrUpdateDynamicObjects();
+            updateScene();
+        }
+    </script>
+</body>
+
+</html>

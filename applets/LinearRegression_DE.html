@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSE als Optimierungsproblem – JSXGraph</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            color: #222;
+            margin: 0;
+        }
+
+        #intro,
+        #boards,
+        #info {
+            width: min(900px, calc(100vw - 32px));
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        #intro {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #intro h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        #explanation,
+        #info {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        #explanation p:first-child,
+        #info p:first-child {
+            margin-top: 0;
+        }
+
+        #explanation ol {
+            margin-bottom: 0;
+            padding-left: 24px;
+        }
+
+        #explanation li + li {
+            margin-top: 5px;
+        }
+
+        #boards {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .board-panel h3 {
+            margin: 0 0 8px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .jxgbox {
+            width: 100%;
+            height: 470px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        #info {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        #solution {
+            display: none;
+            margin-bottom: 0;
+        }
+
+        .legend {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-right: 14px;
+            white-space: nowrap;
+        }
+
+        .legend-line {
+            display: inline-block;
+            width: 24px;
+            border-top: 2px solid;
+        }
+
+        .legend-line.red {
+            border-color: #d73027;
+        }
+
+        .legend-line.purple {
+            border-color: #7b3294;
+            border-top-style: dashed;
+        }
+
+        .legend-line.green {
+            border-color: #1b9e77;
+            border-top-style: dashed;
+        }
+
+        .JXGtext,
+        .JXGinput,
+        .JXGbutton {
+            font-family: sans-serif !important;
+        }
+
+        @media (max-width: 760px) {
+            #boards {
+                grid-template-columns: 1fr;
+            }
+
+            .jxgbox {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro">
+        <h2>Der mittlere quadratische Fehler als Optimierungsproblem</h2>
+
+        <div id="explanation">
+            <p>
+                Die gegebenen Werte sind zentriert, also
+                \(\bar{x}=\bar{z}=0\). Deshalb betrachten wir Geraden der Form
+                \(z=ax\). Es bleibt nur der Parameter \(a\) zu bestimmen.
+            </p>
+
+            <p>
+                Für jeden Datenpunkt \(P_i=(x_i,z_i)\) ist
+                \(e_i=z_i-ax_i\) die vertikale Abweichung von der Geraden.
+                Der mittlere quadratische Fehler ist
+                \[
+                    \operatorname{MSE}(a)
+                    =\frac{1}{n}\sum_{i=1}^{n}(z_i-ax_i)^2.
+                \]
+            </p>
+
+            <p><strong>Untersuche:</strong></p>
+
+            <ol>
+                <li>
+                    Verändere \(a\). Beobachte gleichzeitig die Abweichungen
+                    im linken und den Punkt \((a,\operatorname{MSE}(a))\)
+                    im rechten Koordinatensystem.
+                </li>
+                <li>
+                    Finde zunächst ohne die Lösung einzublenden einen Wert von
+                    \(a\), für den der MSE möglichst klein ist.
+                </li>
+                <li>
+                    Welche Form hat der Graph von \(\operatorname{MSE}(a)\)?
+                    Formuliere eine Vermutung.
+                </li>
+                <li>
+                    Blende das Minimum ein und vergleiche es mit deinem Wert.
+                </li>
+                <li>
+                    Schreibe \(\operatorname{MSE}(a)\) als quadratische Funktion
+                    von \(a\) und bestimme ihr Minimum rechnerisch.
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="boards">
+        <section class="board-panel">
+            <h3>1. Gerade und Abweichungen</h3>
+            <div id="dataBoard"
+                 class="jxgbox"
+                 aria-label="Datenpunkte, Gerade und vertikale Abweichungen"></div>
+        </section>
+
+        <section class="board-panel">
+            <h3>2. Zielfunktion</h3>
+            <div id="mseBoard"
+                 class="jxgbox"
+                 aria-label="Graph des mittleren quadratischen Fehlers"></div>
+        </section>
+    </div>
+
+    <div id="info">
+        <p>
+            <strong>Aktuelle Einstellung</strong><br>
+            Parameter: \(a=\)<span id="aValue">0.00</span><br>
+            Mittlerer quadratischer Fehler:
+            \(\operatorname{MSE}(a)=\)<span id="mseValue">0.00</span>
+        </p>
+
+        <p>
+            <span class="legend">
+                <span class="legend-line red"></span>
+                aktuelle Gerade \(z=ax\)
+            </span>
+            <span class="legend">
+                <span class="legend-line purple"></span>
+                Abweichungen \(e_i\)
+            </span>
+            <span class="legend">
+                <span class="legend-line green"></span>
+                minimierende Gerade
+            </span>
+        </p>
+
+        <p style="margin-bottom: 0;">
+            Die Daten sind tatsächlich zentriert:
+            \(\bar{x}=0\) und \(\bar{z}=0\).
+            Durch das Quadrieren können sich positive und negative Abweichungen
+            nicht gegenseitig aufheben.
+        </p>
+
+        <p id="solution">
+            <strong>Minimum:</strong><br>
+            Für zentrierte Daten wird der MSE bei
+            \[
+                a^*=\frac{\sum_{i=1}^{n}x_i z_i}
+                          {\sum_{i=1}^{n}x_i^2}
+            \]
+            minimal. Für den dargestellten Datensatz gilt
+            \(a^*=\)<span id="aStarValue">0.00</span> und
+            \(\operatorname{MSE}(a^*)=\)<span id="mseStarValue">0.00</span>.
+        </p>
+    </div>
+
+    <script>
+        JXG.Options.text.useMathJax = true;
+
+        const data = [
+            [-4, -2.0],
+            [-3, -2.9],
+            [-2, -0.9],
+            [-1, -1.7],
+            [ 1,  1.2],
+            [ 2,  0.8],
+            [ 3,  2.6],
+            [ 4,  2.9]
+        ];
+
+        const n = data.length;
+
+        function mse(a) {
+            let sum = 0;
+            for (let i = 0; i < n; i++) {
+                const residual = data[i][1] - a * data[i][0];
+                sum += residual * residual;
+            }
+            return sum / n;
+        }
+
+        let sumXX = 0;
+        let sumXZ = 0;
+        for (let i = 0; i < n; i++) {
+            sumXX += data[i][0] * data[i][0];
+            sumXZ += data[i][0] * data[i][1];
+        }
+
+        const aStar = sumXZ / sumXX;
+        const mseStar = mse(aStar);
+
+        const dataBoard = JXG.JSXGraph.initBoard('dataBoard', {
+            boundingbox: [-5, 7.2, 5, -5.5],
+            axis: true,
+            showCopyright: false,
+            showNavigation: false
+        });
+
+        const mseBoard = JXG.JSXGraph.initBoard('mseBoard', {
+            boundingbox: [-1.6, 42, 2.1, -4],
+            axis: true,
+            showCopyright: false,
+            showNavigation: false
+        });
+
+        const signature = dataBoard.create('text', [
+            function () {
+                return dataBoard.getBoundingBox()[0] + 0.1;
+            },
+            function () {
+                return dataBoard.getBoundingBox()[3] + 0.1;
+            },
+            '© 2026 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            highlight: false,
+            strokeColor: '#666',
+            opacity: 0.6,
+            layer: 10
+        });
+
+        dataBoard.create('text', [4.55, 0.35, '\\(x\\)'], {
+            fixed: true,
+            highlight: false
+        });
+
+        dataBoard.create('text', [0.18, 4.8, '\\(z\\)'], {
+            fixed: true,
+            highlight: false
+        });
+
+        mseBoard.create('text', [1.9, -1.7, '\\(a\\)'], {
+            fixed: true,
+            highlight: false
+        });
+
+        mseBoard.create('text', [-1.48, 39, '\\(\\operatorname{MSE}(a)\\)'], {
+            fixed: true,
+            highlight: false
+        });
+
+        const aSlider = dataBoard.create('slider', [
+            [-4.35, 6.35],
+            [1.55, 6.35],
+            [-1.5, 0, 2]
+        ], {
+            name: '\\(a\\)',
+            snapWidth: 0.01,
+            digits: 2,
+            frozen: true,
+            anchorX: 'left'
+        });
+
+        const showMinimum = dataBoard.create('checkbox', [
+            -4.35,
+            5.35,
+            'Minimum anzeigen'
+        ], {
+            checked: false,
+            fixed: true,
+            frozen: true
+        });
+
+        const candidateLine = dataBoard.create('functiongraph', [
+            function (x) {
+                return aSlider.Value() * x;
+            },
+            -4.8,
+            4.8
+        ], {
+            strokeColor: '#d73027',
+            strokeWidth: 2.5,
+            fixed: true,
+            highlight: false,
+            layer: 5
+        });
+
+        const optimalLine = dataBoard.create('functiongraph', [
+            function (x) {
+                return aStar * x;
+            },
+            -4.8,
+            4.8
+        ], {
+            strokeColor: '#1b9e77',
+            strokeWidth: 2.5,
+            dash: 2,
+            visible: function () {
+                return showMinimum.Value();
+            },
+            fixed: true,
+            highlight: false,
+            layer: 4
+        });
+
+        for (let i = 0; i < n; i++) {
+            const x = data[i][0];
+            const z = data[i][1];
+
+            const point = dataBoard.create('point', [x, z], {
+                name: '\\(P_{' + (i + 1) + '}\\)',
+                withLabel: false,
+                size: 3,
+                strokeColor: '#2166ac',
+                fillColor: '#2166ac',
+                fixed: true,
+                highlight: false,
+                showInfobox: false,
+                layer: 9
+            });
+
+            const fittedPoint = dataBoard.create('point', [
+                x,
+                function () {
+                    return aSlider.Value() * x;
+                }
+            ], {
+                visible: false,
+                fixed: true
+            });
+
+            dataBoard.create('segment', [point, fittedPoint], {
+                strokeColor: '#7b3294',
+                strokeWidth: 2,
+                dash: 2,
+                fixed: true,
+                highlight: false,
+                layer: 6
+            });
+        }
+
+        mseBoard.create('functiongraph', [
+            mse,
+            -1.5,
+            2
+        ], {
+            strokeColor: '#2166ac',
+            strokeWidth: 2.5,
+            fixed: true,
+            highlight: false
+        });
+
+        const currentMsePoint = mseBoard.create('point', [
+            function () {
+                return aSlider.Value();
+            },
+            function () {
+                return mse(aSlider.Value());
+            }
+        ], {
+            name: '',
+            size: 4,
+            strokeColor: '#d73027',
+            fillColor: '#d73027',
+            fixed: true,
+            highlight: false,
+            showInfobox: false,
+            layer: 9
+        });
+
+        mseBoard.create('segment', [
+            [
+                function () {
+                    return aSlider.Value();
+                },
+                0
+            ],
+            currentMsePoint
+        ], {
+            strokeColor: '#999',
+            strokeWidth: 1.5,
+            dash: 2,
+            fixed: true,
+            highlight: false
+        });
+
+        mseBoard.create('point', [aStar, mseStar], {
+            name: '\\((a^*,\\operatorname{MSE}(a^*))\\)',
+            size: 4,
+            strokeColor: '#1b9e77',
+            fillColor: '#1b9e77',
+            visible: function () {
+                return showMinimum.Value();
+            },
+            fixed: true,
+            highlight: false,
+            showInfobox: false,
+            label: {
+                offset: [7, 10]
+            },
+            layer: 9
+        });
+
+        mseBoard.create('segment', [
+            [aStar, 0],
+            [aStar, mseStar]
+        ], {
+            strokeColor: '#1b9e77',
+            strokeWidth: 1.5,
+            dash: 2,
+            visible: function () {
+                return showMinimum.Value();
+            },
+            fixed: true,
+            highlight: false
+        });
+
+        const aValue = document.getElementById('aValue');
+        const mseValue = document.getElementById('mseValue');
+        const solution = document.getElementById('solution');
+
+        document.getElementById('aStarValue').textContent = aStar.toFixed(2);
+        document.getElementById('mseStarValue').textContent = mseStar.toFixed(2);
+
+        function updateReadout() {
+            aValue.textContent = aSlider.Value().toFixed(2);
+            mseValue.textContent = mse(aSlider.Value()).toFixed(2);
+            solution.style.display = showMinimum.Value() ? 'block' : 'none';
+            mseBoard.update();
+        }
+
+        aSlider.on('drag', updateReadout);
+        aSlider.on('up', updateReadout);
+
+        JXG.addEvent(
+            showMinimum.rendNodeCheckbox,
+            'change',
+            function () {
+                solution.style.display = showMinimum.Value() ? 'block' : 'none';
+                dataBoard.update();
+                mseBoard.update();
+            },
+            showMinimum
+        );
+
+        updateReadout();
+    </script>
+</body>
+
+</html>

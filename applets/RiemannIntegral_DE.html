@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Riemann-Summen – JSXGraph</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <!-- MathJax -->
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
+
+    <!-- nerdamer for symbolic integration -->
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.11/nerdamer.core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.11/Calculus.min.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        #jxgbox {
+            width: 900px;
+            height: 550px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro" style="width: 900px; margin: 20px auto 10px auto;">
+        <h2 style="margin-bottom: 8px;">Die Riemann-Summen</h2>
+
+        <div id="explanation" style="
+      padding: 12px 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #f9f9f9;
+      font-size: 14px;
+      line-height: 1.45;
+  ">
+            <p>
+                In dieser Ansicht kannst du experimentell untersuchen, wie sich
+                <strong>Riemann-Summen</strong> zur Approximation des Integrals einer Funktion
+                \(f(x)\) verhalten.
+            </p>
+
+            <p>
+                Wähle zuerst eine Funktion \(f(x)\) im Eingabefeld oben links und verschiebe die Punkte
+                \(a\) und \(b\) auf der x-Achse, um das Intervall \([a,b]\) festzulegen.
+            </p>
+
+            <p>
+                Mit dem Schieberegler stellst du die Anzahl der Teilintervalle \(n\) ein.
+                Das Intervall \([a,b]\) wird dann in \(n\) gleich breite Teilintervalle
+                zerlegt; zu jedem Teilintervall gehört ein Rechteck.
+            </p>
+
+            <p><strong>Schalte nun die verschiedenen Summen ein:</strong></p>
+            <ul>
+                <li>
+                    <strong>untere Summe:</strong>
+                    In jedem Teilintervall \([x_i,x_{i+1}]\) wird der kleinste Werts von \(f\)
+                    als Rechteckhöhe verwendet. Die Gesamtfläche aller Rechtecke ergibt die untere Summe \(L_n(f)\).
+                </li>
+                <li>
+                    <strong>obere Summe:</strong>
+                    In jedem Teilintervall \([x_i,x_{i+1}]\) wird der grösste Werts von \(f\)
+                    als Rechteckhöhe verwendet. So entsteht die obere Summe \(U_n(f)\).
+                </li>
+                <li>
+                    <strong>Summe mit zufälligen Höhen:</strong>
+                    In jedem Teilintervall wird ein zufälliger Punkt \(x_i^\ast \in [x_i,x_{i+1}]\)
+                    gewählt und die Rechteckhöhe ist \(f(x_i^\ast)\). Dies entspricht einer
+                    „typischen“ Riemann-Summe \(R_n(f)\).
+                </li>
+            </ul>
+
+            <p>
+                Verändere \(a\), \(b\) und \(n\) und beobachte, wie sich die drei Summen verändern.
+                Für stetige Funktionen gilt:
+                je grösser \(n\) wird, desto näher liegen \(L_n(f)\), \(U_n(f)\) und \(R_n(f)\) am Flächeninhalt
+                \(\displaystyle \int_a^b f(x)\,\mathrm{d}x\).
+            </p>
+        </div>
+    </div>
+
+    <div id="jxgbox" class="jxgbox"></div>
+
+    <script>
+        JXG.Options.text.useMathJax = true;
+
+        // --- Board ---
+        const board = JXG.JSXGraph.initBoard('jxgbox', {
+            boundingbox: [-8, 5.5, 10, -5.5], // [x_min, y_max, x_max, y_min]
+            axis: true,
+            showNavigation: true,
+            showCopyright: false
+        });
+
+        // Creative Commons signature (watermark)
+        const CCsignature = board.create('text', [
+            function () {
+                const bb = board.getBoundingBox();
+                const xmin = bb[0], xmax = bb[2];
+                return xmin + 0.01 * (xmax - xmin);
+            },
+            function () {
+                const bb = board.getBoundingBox();
+                const ymin = bb[3], ymax = bb[1];
+                return ymin + 0.01 * (ymax - ymin);
+            },
+            '© 2025 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            strokeColor: '#666',
+            opacity: 0.6,
+            highlight: false
+        });
+
+        // --- Sliders for a and b (as gliders on x-axis) ---
+        const aPoint = board.create('glider', [-1, 0, board.defaultAxes.x], {
+            name: 'a',
+            size: 4,
+            strokeColor: 'black',
+            fillColor: 'white'
+        });
+
+        const bPoint = board.create('glider', [3, 0, board.defaultAxes.x], {
+            name: 'b',
+            size: 4,
+            strokeColor: 'black',
+            fillColor: 'white'
+        });
+
+        // Vertical dashed line at x = a
+        const lineA = board.create('line', [
+            () => [aPoint.X(), -100],
+            () => [aPoint.X(), 100]
+        ], {
+            straightFirst: false,
+            straightLast: false,
+            strokeColor: '#555',
+            dash: 2,
+            strokeWidth: 1
+        });
+
+        // Vertical dashed line at x = b
+        const lineB = board.create('line', [
+            () => [bPoint.X(), -100],
+            () => [bPoint.X(), 100]
+        ], {
+            straightFirst: false,
+            straightLast: false,
+            strokeColor: '#555',
+            dash: 2,
+            strokeWidth: 1
+        });
+
+        const intervalSeg = board.create('segment', [aPoint, bPoint], {
+            strokeColor: 'black',
+            strokeWidth: 2
+        });
+
+        // --- Function handling via board.jc.snippet ---
+        let funcExpr = '(x+1)*(x-2)^2';
+        let funf = null;          // parsed function f(x)
+        let dff = null;           // derivative (not used here, but available)
+        let fungraph = null;      // the functiongraph object
+
+        function parseAndPlotFunction() {
+            const expr = inputf.Value();      // read from JSXGraph input
+            try {
+                funf = board.jc.snippet(expr, true, 'x', false);
+            } catch (e) {
+                alert('Cannot parse function f(x). Please check your formula.');
+                return false;
+            }
+
+            dff = JXG.Math.Numerics.D(funf);
+
+            if (fungraph) {
+                board.removeObject(fungraph);
+                fungraph = null;
+            }
+
+            fungraph = board.create('functiongraph', [
+                funf,
+                function () { return Math.min(aPoint.X(), bPoint.X()); },
+                function () { return Math.max(aPoint.X(), bPoint.X()); }
+            ], {
+                strokeColor: 'black',
+                strokeWidth: 2
+            });
+
+            rebuildSums();
+            return true;
+        }
+
+        // --- GUI elements on the board ---
+
+        // Input for f(x) in upper-left corner
+        const inputf = board.create('input', [-7.5, 5.0, funcExpr, 'f(x) = '], {
+            cssStyle: 'width:110px;',
+            frozen: true,
+            fixed: true
+        });
+
+        // Re-parse on interaction with the input
+        inputf.on('up', parseAndPlotFunction);
+
+        // Hook DOM input for Enter / blur
+        if (inputf.rendNodeInput) {
+            inputf.rendNodeInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    parseAndPlotFunction();
+                }
+            });
+            inputf.rendNodeInput.addEventListener('blur', function () {
+                parseAndPlotFunction();
+            });
+        }
+
+        // Slider for n
+        const nSlider = board.create('slider',
+            [[-7.5, 4.0], [-4.0, 4.0], [1, 8, 80]], // [min, init, max]
+            {
+                name: 'n',
+                snapWidth: 1,
+                withTicks: true,
+                withLabel: false
+            }
+        );
+
+        const nText = board.create('text', [-3.7, 4.0, function () {
+            return 'n = ' + Math.round(nSlider.Value());
+        }], {
+            anchorX: 'left', anchorY: 'middle'
+        });
+
+        // Checkboxes
+        const lowerCb = board.create('checkbox', [-7.5, 3.0, 'untere Summe'], {
+            checked: false, strokeColor: '#0066cc'
+        });
+        const upperCb = board.create('checkbox', [-7.5, 2.3, 'obere Summe'], {
+            checked: false, strokeColor: '#999999'
+        });
+        const randomCb = board.create('checkbox', [-7.5, 1.6, 'Summe mit zufälligen Höhen'], {
+            checked: false, strokeColor: '#cc0000'
+        });
+
+        // --- Riemann rectangles ---
+        let lowerRects = [];
+        let upperRects = [];
+        let randomRects = [];
+
+        // Numeric values of sums and integral
+        let lowerSumVal = NaN;
+        let upperSumVal = NaN;
+        let randomSumVal = NaN;
+        let integralVal = NaN;
+
+        function clearRectangles(arr) {
+            for (let i = 0; i < arr.length; i++) {
+                board.removeObject(arr[i]);
+            }
+            arr.length = 0;
+        }
+
+        function buildRectangles(color, rectArray, getHeight, visFun) {
+            const n = Math.max(1, Math.round(nSlider.Value()));
+            const a = Math.min(aPoint.X(), bPoint.X());
+            const b = Math.max(aPoint.X(), bPoint.X());
+            const width = (b - a) / n;
+
+            if (!isFinite(width) || width <= 0 || !funf) return NaN;
+
+            let sum = 0;
+
+            for (let i = 0; i < n; i++) {
+                const xLeft = a + i * width;
+                const xRight = a + (i + 1) * width;
+                const yHeight = getHeight(xLeft, xRight);
+
+                if (!isFinite(yHeight) || isNaN(yHeight)) continue;
+
+                const yBase = 0;
+                const yTop = yHeight;
+
+                const p1 = [xLeft, yBase];
+                const p2 = [xRight, yBase];
+                const p3 = [xRight, yTop];
+                const p4 = [xLeft, yTop];
+
+                const poly = board.create('polygon', [p1, p2, p3, p4], {
+                    withLines: true,
+                    borders: {
+                        strokeColor: color,
+                        strokeWidth: 1
+                    },
+                    fillColor: color,
+                    fillOpacity: 0.25,
+                    vertices: { visible: false },
+                    highlight: false,
+                    fixed: true,
+                    visible: visFun      // dynamic visibility
+                });
+
+                rectArray.push(poly);
+
+                // area contribution
+                sum += yHeight * width;
+            }
+
+            return sum;
+        }
+
+        const NUM_SAMPLES = 10;   // for lower/upper sum sampling
+
+        function sampleMinOnInterval(xL, xR) {
+            let minVal = Infinity;
+            for (let k = 0; k <= NUM_SAMPLES; k++) {
+                const t = k / NUM_SAMPLES;
+                const x = xL + t * (xR - xL);
+                const y = funf(x);
+                if (isFinite(y) && y < minVal) {
+                    minVal = y;
+                }
+            }
+            return minVal;
+        }
+
+        function sampleMaxOnInterval(xL, xR) {
+            let maxVal = -Infinity;
+            for (let k = 0; k <= NUM_SAMPLES; k++) {
+                const t = k / NUM_SAMPLES;
+                const x = xL + t * (xR - xL);
+                const y = funf(x);
+                if (isFinite(y) && y > maxVal) {
+                    maxVal = y;
+                }
+            }
+            return maxVal;
+        }
+
+        // Try to compute the integral symbolically using nerdamer.
+        // If this fails, fall back to a numerical trapezoid rule.
+        function computeIntegral() {
+            if (!funf) return NaN;
+
+            const a = Math.min(aPoint.X(), bPoint.X());
+            const b = Math.max(aPoint.X(), bPoint.X());
+            if (!(isFinite(a) && isFinite(b)) || a === b) return NaN;
+
+            const expr = inputf.Value(); // the string the student entered
+
+            // --- 1) Try symbolic integration with nerdamer ---
+            try {
+                // F(x) = ∫ f(x) dx
+                const F = nerdamer.integrate(expr, 'x');  // antiderivative as symbolic expression
+
+                // Evaluate F(b) and F(a)
+                const Fb = Number(nerdamer(F).evaluate({ x: b }).text());
+                const Fa = Number(nerdamer(F).evaluate({ x: a }).text());
+
+                if (isFinite(Fb) && isFinite(Fa)) {
+                    return Fb - Fa;
+                }
+            } catch (e) {
+                // symbolic integration failed, fall back below
+                console.warn('Symbolic integration failed:', e);
+            }
+
+            // --- 2) Fallback: numerical trapezoid rule ---
+            const N = 400; // number of subintervals
+            const h = (b - a) / N;
+            let area = 0;
+
+            for (let i = 0; i < N; i++) {
+                const xL = a + i * h;
+                const xR = xL + h;
+                const yL = funf(xL);
+                const yR = funf(xR);
+                if (isFinite(yL) && isFinite(yR)) {
+                    area += 0.5 * (yL + yR) * h;
+                }
+            }
+            return area;
+        }
+
+
+        function rebuildSums() {
+            clearRectangles(lowerRects);
+            clearRectangles(upperRects);
+            clearRectangles(randomRects);
+
+            const n = Math.max(1, Math.round(nSlider.Value()));
+            if (n <= 0 || !funf) return;
+
+            const a = Math.min(aPoint.X(), bPoint.X());
+            const b = Math.max(aPoint.X(), bPoint.X());
+            const width = (b - a) / n;
+            if (!isFinite(width) || width <= 0) return;
+
+            // Lower sum: approximate inf over [xL, xR]
+            lowerSumVal = buildRectangles(
+                '#0066cc',
+                lowerRects,
+                function (xL, xR) {
+                    return sampleMinOnInterval(xL, xR);
+                },
+                () => lowerCb.Value()
+            );
+
+            // Upper sum: approximate sup over [xL, xR]
+            upperSumVal = buildRectangles(
+                '#999999',
+                upperRects,
+                function (xL, xR) {
+                    return sampleMaxOnInterval(xL, xR);
+                },
+                () => upperCb.Value()
+            );
+
+            // Random Riemann sum: random point in each subinterval (red)
+            randomSumVal = buildRectangles(
+                '#cc0000',
+                randomRects,
+                function (xL, xR) {
+                    const xSample = xL + Math.random() * (xR - xL);
+                    return funf(xSample);
+                },
+                () => randomCb.Value()
+            );
+
+            // Integral approximation
+            integralVal = computeIntegral();
+
+            board.update();
+        }
+
+        // --- Texts for integral and sums (to the right of x = b) ---
+
+        // helper: x-position to the right of the current b
+        function xRightOfB(offset) {
+            return function () {
+                return Math.max(aPoint.X(), bPoint.X()) + offset;
+            };
+        }
+
+        // y positions: stack them vertically
+        const yIntegral = 4.5;
+        const yLower = 3;
+        const yUpper = 2.3;
+        const yRandom = 1.7;
+
+        const integralText = board.create('text', [
+            xRightOfB(1),
+            yIntegral,
+            function () {
+                if (!isFinite(integralVal)) return '';
+                const a = Math.min(aPoint.X(), bPoint.X());
+                const b = Math.max(aPoint.X(), bPoint.X());
+                return '\\(\\displaystyle\\int\\limits_{' + a.toFixed(2) + '}^{' + b.toFixed(2) + '} f(x)\\,dx'
+                    + ' = ' + integralVal.toFixed(2) + '\\)';
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: 'black'
+        });
+
+        const lowerText = board.create('text', [
+            xRightOfB(1),
+            yLower,
+            function () {
+                if (!lowerCb.Value() || !isFinite(lowerSumVal)) return '';
+                return '\\(L_n(f) = ' + lowerSumVal.toFixed(2) + '\\)';
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: '#0066cc'
+        });
+
+        const upperText = board.create('text', [
+            xRightOfB(1),
+            yUpper,
+            function () {
+                if (!upperCb.Value() || !isFinite(upperSumVal)) return '';
+                return '\\(U_n(f) = ' + upperSumVal.toFixed(2) + '\\)';
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: '#999999'
+        });
+
+        const randomText = board.create('text', [
+            xRightOfB(1),
+            yRandom,
+            function () {
+                if (!randomCb.Value() || !isFinite(randomSumVal)) return '';
+                return '\\(R_n(f) = ' + randomSumVal.toFixed(2) + '\\)';
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: '#cc0000'
+        });
+
+        // --- Event wiring ---
+        aPoint.on('drag', rebuildSums);
+        bPoint.on('drag', rebuildSums);
+        nSlider.on('up', rebuildSums);
+
+        // Initial parse & draw
+        parseAndPlotFunction();
+    </script>
+</body>
+
+</html>

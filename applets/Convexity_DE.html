@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Konvexität – drei Charakterisierungen</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <!-- MathJax -->
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        #jxgbox {
+            width: 900px;
+            height: 550px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+        }
+
+        #intro {
+            width: 900px;
+            margin: 20px auto 10px auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro">
+        <h2 style="margin-bottom: 8px;">Konvexität einer Funktion</h2>
+
+        <div style="
+        padding: 12px 16px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #f9f9f9;
+        font-size: 14px;
+        line-height: 1.45;
+    ">
+            <p>
+                In dieser interaktiven Ansicht kannst du drei äquivalente Charakterisierungen der
+                <strong>Konvexität</strong> einer Funktion experimentell untersuchen und durch
+                eigenes Verschieben der Punkte nachvollziehen.
+            </p>
+
+            <p>
+                Wähle im Diagramm eine der drei Darstellungsarten. Jede davon zeigt dir ein
+                <em>visuelles Kriterium</em> für Konvexität, das du durch Verschieben der Punkte direkt überprüfen
+                kannst.
+                Du kannst die Funktionsgleichung \(f(x)\) jederzeit anpassen, indem du im Eingabefeld eine neue Formel
+                einträgst.
+            </p>
+            <ol>
+                <li style="color:#0066cc; margin-bottom: 12px;">
+                    <strong>Sehnenkriterium (blau):</strong><br>
+                    Unten auf der x-Achse befinden sich zwei verschiebbare Punkte \(x_1\) und \(x_2\).
+                    Die entsprechenden Punkte auf dem Graphen der Funktion sind \(P_1\) und \(P_2\).
+                    <br><br>
+                    Ziehe \(x_1\) und \(x_2\): Die Sehne \(\overline{P_1P_2}\) ändert sich. Bei einer konvexen Funktion
+                    liegt der Graph stets
+                    <strong>unterhalb oder auf</strong> dieser Sehne, unabhängig von der Wahl der beiden Punkte.
+                    <br>
+
+                </li>
+
+                <li style="color:#cc0000; margin-bottom: 12px;">
+                    <strong>Tangentialkriterium (rot):</strong><br>
+                    Verschiebe den Punkt \(x_0\) auf der x-Achse; im entsprechenden Punkt \(T\) erscheint die
+                    rote Tangente.
+                    <br><br>
+                    Bei einer konvexen Funktion bleibt der Graph immer <strong>auf oder über </strong> der roten Tangente, unabhängig von
+                    der Wahl des Punktes \(T\). Beobachte beim Verschieben, ob dieses Verhalten bestehen bleibt.
+                </li>
+
+                <li style="color:#009900; margin-bottom: 12px;">
+                    <strong>Wachsende Tangentensteigung / Ableitung (grün):</strong><br>
+                    Die beiden Punkte \(x_1\) und \(x_2\) erscheinen erneut, jetzt in grün.
+                    <br><br>
+                    Bei einer konvexen Funktion gilt:
+                    \(x_1 < x_2 \implies f'(x_1) \le f'(x_2)\). Dies siehst du an den beiden grünen Tangentenstücken bei
+                        \(P_1\) und \(P_2\). Durch Verschieben von \(x_1\) und \(x_2\) kannst du direkt vergleichen, ob
+                        die Steigung wirklich wächst. </li>
+            </ol>
+        </div>
+    </div>
+
+
+    <div id="jxgbox" class="jxgbox"></div>
+
+    <script>
+        JXG.Options.text.useMathJax = true;
+
+        const board = JXG.JSXGraph.initBoard('jxgbox', {
+            boundingbox: [-5, 6, 5, -4], // [x_min, y_max, x_max, y_min]
+            axis: true,
+            showNavigation: true,
+            showCopyright: false
+        });
+
+        // Creative Commons signature (watermark)
+        const CCsignature = board.create('text', [
+            function () {
+                const bb = board.getBoundingBox();
+                const xmin = bb[0], xmax = bb[2];
+                return xmin + 0.01 * (xmax - xmin);
+            },
+            function () {
+                const bb = board.getBoundingBox();
+                const ymin = bb[3], ymax = bb[1];
+                return ymin + 0.01 * (ymax - ymin);
+            },
+            '© 2025 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            strokeColor: '#666',
+            opacity: 0.6,
+            highlight: false
+        });
+
+        // --- global mode (1, 2 oder 3) ---
+        let mode = 1;
+
+        // Dropdown als HTML im Board
+        const modeText = board.create('text', [
+            -4.8,
+            5.7,
+            '<span style="font-size:12px; margin-right:4px;"><strong>Darstellung:</strong></span>' +
+            '<select id="modeSelectOnBoard" style="font-size:12px;">' +
+            '<option value="1">1. Sehnenkriterium</option>' +
+            '<option value="2">2. Tangentialkriterium</option>' +
+            '<option value="3">3. Wachsende Tangentensteigung / Ableitung</option>' +
+            '</select>'
+        ], {
+            display: 'html',
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true,
+            frozen: true
+        });
+
+        const modeSelect = document.getElementById('modeSelectOnBoard');
+
+        // --- Funktion und Ableitung ---
+        let funf = function (x) {
+            return 0.5 * x * x;
+        };
+        let dff = JXG.Math.Numerics.D(funf);
+
+        // Eingabefeld für f(x)
+        const inputf = board.create('input', [-4.8, 5.1, '1/2*x^2-2', 'f(x) = '], {
+            cssStyle: 'width:120px;',
+            frozen: true,
+            fixed: true
+        });
+
+        // Graph von f
+        const fungraph = board.create('functiongraph', [
+            function (x) { return funf(x); },
+            function () { return -4; },
+            function () { return 4; }
+        ], {
+            strokeColor: 'black',
+            strokeWidth: 2
+        });
+
+        // Graph von f' (für Modus 3)
+        /* const dgraph = board.create('functiongraph', [
+            function (x) { return dff(x); },
+            function () { return -4; },
+            function () { return 4; }
+        ], {
+            strokeColor: 'red',
+            strokeWidth: 2,
+            dash: 2,
+            visible: function () { return mode === 3; }
+        }); */
+
+        // --- Hilfsfunktion: Ausdruck aus input parsen ---
+        function parseAndPlotFunction() {
+            const expr = inputf.Value();
+            try {
+                funf = board.jc.snippet(expr, true, 'x', false);
+            } catch (e) {
+                alert('Die Funktion f(x) konnte nicht geparst werden. Bitte Formulierung prüfen.');
+                return false;
+            }
+            dff = JXG.Math.Numerics.D(funf);
+            board.update();
+            if (window.MathJax && window.MathJax.typeset) {
+                window.MathJax.typeset();
+            }
+            return true;
+        }
+
+        // Re-parse bei Interaktion mit dem Input
+        inputf.on('up', parseAndPlotFunction);
+        if (inputf.rendNodeInput) {
+            inputf.rendNodeInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    parseAndPlotFunction();
+                }
+            });
+            inputf.rendNodeInput.addEventListener('blur', function () {
+                parseAndPlotFunction();
+            });
+        }
+
+        // --- 1. Sehnenanschnitt: zwei Punkte P_1, P_2 auf dem Graphen ---
+        const x1Glider = board.create('glider', [-1, 0, board.defaultAxes.x], {
+            name: '$x_1$',
+            size: 3,
+            strokeColor: '#0066cc',
+            fillColor: 'white',
+            visible: function () { return mode === 1 || mode === 3; }
+        });
+
+        const x2Glider = board.create('glider', [3, 0, board.defaultAxes.x], {
+            name: '$x_2$',
+            size: 3,
+            strokeColor: '#0066cc',
+            fillColor: 'white',
+            visible: function () { return mode === 1 || mode === 3; }
+        });
+
+        const P1 = board.create('point', [
+            function () { return x1Glider.X(); },
+            function () { return funf(x1Glider.X()); }
+        ], {
+            name: '$P_1$',
+            size: 3,
+            strokeColor: '#0066cc',
+            fillColor: '#0066cc',
+            visible: function () { return mode === 1 || mode === 3; }
+        });
+
+        const P2 = board.create('point', [
+            function () { return x2Glider.X(); },
+            function () { return funf(x2Glider.X()); }
+        ], {
+            name: '$P_2$',
+            size: 3,
+            strokeColor: '#0066cc',
+            fillColor: '#0066cc',
+            visible: function () { return mode === 1 || mode === 3; }
+        });
+
+        // --- NEU: vertikale gestrichelte Linien von (x_1,0) nach P_1 und (x_2,0) nach P_2 ---
+        const vLine1 = board.create('segment', [
+            function () { return [x1Glider.X(), 0]; },
+            function () { return [x1Glider.X(), funf(x1Glider.X())]; }
+        ], {
+            strokeColor: '#0066cc',
+            dash: 2,
+            strokeWidth: 1.5,
+            visible: function () { return mode === 1 || mode === 3; }
+        });
+
+        const vLine2 = board.create('segment', [
+            function () { return [x2Glider.X(), 0]; },
+            function () { return [x2Glider.X(), funf(x2Glider.X())]; }
+        ], {
+            strokeColor: '#0066cc',
+            dash: 2,
+            strokeWidth: 1.5,
+            visible: function () { return mode === 1 || mode === 3; }
+        });
+
+        const chordP1P2 = board.create('segment', [P1, P2], {
+            strokeColor: '#0066cc',
+            strokeWidth: 2,
+            visible: function () { return mode === 1; }
+        });
+
+        const textSehne = board.create('text', [
+            -4.8,
+            4.8,
+            function () {
+                if (mode !== 1) return '';
+                return '1. Sehnenkriterium: Für eine konvexe Funktion liegt der Graph\n' +
+                    'immer auf oder unterhalb der Strecke \\(\\overline{P_1 P_2}\\) zwischen zwei Punkten.';
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: '#0066cc',
+            frozen: true
+        });
+
+        // --- 2. Tangente in einem Punkt T ---
+        const tGlider = board.create('glider', [-1, 0, board.defaultAxes.x], {
+            name: '$x_0$',
+            size: 3,
+            strokeColor: '#cc0000',
+            fillColor: 'white',
+            visible: function () { return mode === 2; }
+        });
+
+        const T = board.create('point', [
+            function () { return tGlider.X(); },
+            function () { return funf(tGlider.X()); }
+        ], {
+            name: '$T$',
+            size: 3,
+            strokeColor: '#cc0000',
+            fillColor: '#cc0000',
+            visible: function () { return mode === 2; }
+        });
+
+        // --- NEU: vertikale gestrichelte Linien von (x_0,0) nach T ---
+        const vLine0 = board.create('segment', [
+            function () { return [tGlider.X(), 0]; },
+            function () { return [tGlider.X(), funf(tGlider.X())]; }
+        ], {
+            strokeColor: '#cc0000',
+            dash: 2,
+            strokeWidth: 1.5,
+            visible: function () { return mode === 2; }
+        });
+
+        const tangent = board.create('line', [
+            T,
+            function () {
+                const x0 = tGlider.X();
+                const m = dff(x0);
+                return [x0 + 1, funf(x0) + m * 1];
+            }
+        ], {
+            strokeColor: '#cc0000',
+            dash: 2,
+            visible: function () { return mode === 2; }
+        });
+
+        const textTangente = board.create('text', [
+            -4.8,
+            4.8,
+            function () {
+                if (mode !== 2) return '';
+                const x0 = tGlider.X();
+                const m0 = dff(x0);
+                return '2. Tangentialkriterium: Für eine konvexe Funktion liegt der Graph immer\n' +
+                    'auf oder oberhalb jeder Tangente.\n' +
+                    'Hier: Tangente in \\(x_0=' + x0.toFixed(2) +
+                    '\\) mit Steigung \\(f\'(x_0)\\approx ' + m0.toFixed(2) + '\\).';
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: '#cc0000',
+            frozen: true
+        });
+
+        // --- 3. Wachsende Steigung: Anzeige der Ableitung und zweier Steigungen ---
+        const textSteigung = board.create('text', [
+            -4.8,
+            4.8,
+            function () {
+                if (mode !== 3) return '';
+                const x1 = x1Glider.X();
+                const x2 = x2Glider.X();
+                const m1 = dff(x1);
+                const m2 = dff(x2);
+                const order = x1 <= x2 ? 'x_1 < x_2' : 'x_2 < x_1';
+                return '3. Monotonie der Steigung: Für eine konvexe Funktion ist die Ableitung\n' +
+                    'monoton wachsend. D.h. aus \\(' + order + '\\) folgt \\(f\'(x_1) \\le f\'(x_2)\\).\n' +
+                    'Hier: \\(x_1 \\approx ' + x1.toFixed(2) + ',\\; x_2 \\approx ' + x2.toFixed(2) + '\\)\n' +
+                    'und \\(f\'(x_1) \\approx ' + m1.toFixed(2) +
+                    ',\\; f\'(x_2) \\approx ' + m2.toFixed(2) + '\\).';
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            strokeColor: '#009900',
+            frozen: true
+        });
+
+        // kleine Tangenten-Stücke in P_1 und P_2 zur Veranschaulichung der Steigungen
+        const tangentP1 = board.create('segment', [
+            function () {
+                const x = x1Glider.X();
+                const y = funf(x);
+                const m = dff(x);
+                return [x - 0.5, y - 0.5 * m];
+            },
+            function () {
+                const x = x1Glider.X();
+                const y = funf(x);
+                const m = dff(x);
+                return [x + 0.5, y + 0.5 * m];
+            }
+        ], {
+            strokeColor: '#009900',
+            strokeWidth: 2,
+            visible: function () { return mode === 3; }
+        });
+
+        const tangentP2 = board.create('segment', [
+            function () {
+                const x = x2Glider.X();
+                const y = funf(x);
+                const m = dff(x);
+                return [x - 0.5, y - 0.5 * m];
+            },
+            function () {
+                const x = x2Glider.X();
+                const y = funf(x);
+                const m = dff(x);
+                return [x + 0.5, y + 0.5 * m];
+            }
+        ], {
+            strokeColor: '#009900',
+            strokeWidth: 2,
+            visible: function () { return mode === 3; }
+        });
+
+        // Labels für P1- und P2-Steigung
+        const textP1 = board.create('text', [
+            function () { return x1Glider.X() - 0.1; },
+            function () { return funf(x1Glider.X()) + 0.8; },
+            function () {
+                if (mode !== 3) return '';
+                const x = x1Glider.X();
+                const m = dff(x);
+                return '\\(m_1 = f\'(x_1) \\approx ' + m.toFixed(2) + '\\)';
+            }
+        ], {
+            anchorX: 'right',
+            anchorY: 'bottom',
+            strokeColor: '#009900'
+        });
+
+        const textP2 = board.create('text', [
+            function () { return x2Glider.X() + 0.1; },
+            function () { return funf(x2Glider.X()) + 0.8; },
+            function () {
+                if (mode !== 3) return '';
+                const x = x2Glider.X();
+                const m = dff(x);
+                return '\\(m_2 = f\'(x_2) \\approx ' + m.toFixed(2) + '\\)';
+            }
+        ], {
+            anchorX: 'left',
+            anchorY: 'bottom',
+            strokeColor: '#009900'
+        });
+
+        // --- NEU: Farb-Update je nach Modus 1 oder 3 ---
+        function updateModeStyling() {
+            const col = (mode === 1 ? '#0066cc' : '#009900');
+
+            [P1, P2].forEach(o => {
+                o.setAttribute({
+                    strokeColor: col,
+                    fillColor: col
+                });
+            });
+
+            [x1Glider, x2Glider].forEach(o => {
+                o.setAttribute({
+                    strokeColor: col
+                });
+            });
+
+            [vLine1, vLine2].forEach(o => {
+                o.setAttribute({
+                    strokeColor: col
+                });
+            });
+        }
+
+        // Dropdown-Event: Mode wechseln + Farben aktualisieren
+        modeSelect.addEventListener('change', function () {
+            mode = parseInt(this.value, 10);
+            updateModeStyling();
+            board.update();
+            if (window.MathJax && window.MathJax.typeset) {
+                window.MathJax.typeset();
+            }
+        });
+
+        // erste Initialisierung
+        parseAndPlotFunction();
+        updateModeStyling();
+    </script>
+</body>
+
+</html>
