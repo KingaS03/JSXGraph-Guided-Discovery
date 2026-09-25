@@ -33,3 +33,7 @@ Open an HTML file in a web browser to explore the corresponding applet. An inter
 
 Dr. Kinga Sipos  
 Mathematical Institute, University of Bern
+
+## License
+
+The source code is licensed under the MIT License. Original educational content, including explanatory texts and discovery-guiding questions, is licensed under Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0), unless otherwise indicated.
