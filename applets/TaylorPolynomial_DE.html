@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taylor-Polynome – JSXGraph</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
+
+    <!-- Symbolic derivatives for the Taylor coefficients -->
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.11/nerdamer.core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.11/Calculus.min.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            color: #222;
+        }
+
+        #intro,
+        #jxgbox {
+            width: min(900px, calc(100vw - 32px));
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #intro {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #intro h2 {
+            margin-bottom: 8px;
+        }
+
+        #explanation {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        #explanation ol {
+            margin-bottom: 0;
+        }
+
+        #jxgbox {
+            height: min(550px, 67vw);
+            min-height: 430px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+
+        .JXGtext,
+        .JXGinput,
+        .JXGbutton {
+            font-family: sans-serif !important;
+        }
+
+        @media (max-width: 650px) {
+            #jxgbox {
+                height: 510px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro">
+        <h2>Taylor-Polynome</h2>
+
+        <div id="explanation">
+            <p>
+                In dieser Ansicht kannst du untersuchen, wie eine Funktion \(f\) in der
+                Umgebung einer Entwicklungsstelle \(x_0\) durch ein
+                <strong>Taylor-Polynom</strong> angenähert wird.
+            </p>
+
+            <p>
+                Gib eine Funktion \(f(x)\) ein. Verändere danach mit den Schiebereglern
+                die Entwicklungsstelle \(x_0\) und die Ordnung \(n\) des Polynoms.
+                Die ursprüngliche Funktion ist <span style="color:#1558d6"><strong>blau</strong></span>,
+                das Taylor-Polynom <span style="color:#d62728"><strong>rot</strong></span> dargestellt.
+            </p>
+
+            <p><strong>Untersuche:</strong></p>
+            <ol>
+                <li>Wie verändert sich die Approximation, wenn du die Ordnung \(n\) erhöhst?</li>
+                <li>In welchem Bereich um \(x_0\) stimmen Funktion und Taylor-Polynom gut überein?</li>
+                <li>Was verändert sich, wenn du die Entwicklungsstelle \(x_0\) verschiebst?</li>
+                <li>Blende die Abweichung ein und untersuche sie an verschiedenen Stellen \(x\).</li>
+                <li>Formuliere eine Vermutung zur Bildung des Polynoms und blende danach die Definition ein.</li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="jxgbox" class="jxgbox" aria-label="Interaktive Darstellung von Taylor-Polynomen"></div>
+
+    <script>
+        JXG.Options.text.useMathJax = true;
+
+        const COLORS = {
+            function: '#1558d6',
+            polynomial: '#d62728',
+            center: '#8a3ffc',
+            error: '#e4571e',
+            guide: '#666666'
+        };
+
+        const MAX_ORDER = 15;
+
+        const board = JXG.JSXGraph.initBoard('jxgbox', {
+            boundingbox: [-8, 6.5, 10, -5.5],
+            axis: true,
+            showNavigation: true,
+            showCopyright: false,
+            keepAspectRatio: false,
+            pan: { enabled: true },
+            zoom: { wheel: true, needShift: true }
+        });
+
+        // Creative Commons signature in the bottom-left corner.
+        board.create('text', [
+            function () {
+                const bb = board.getBoundingBox();
+                return bb[0] + 0.01 * (bb[2] - bb[0]);
+            },
+            function () {
+                const bb = board.getBoundingBox();
+                return bb[3] + 0.01 * (bb[1] - bb[3]);
+            },
+            '© 2026 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            strokeColor: '#666666',
+            opacity: 0.6,
+            highlight: false
+        });
+
+        let functionExpression = 'sin(x)';
+        let functionLatex = nerdamer(functionExpression).toTeX();
+        let f = board.jc.snippet(functionExpression, true, 'x', false);
+        let derivativeExpressions = [];
+        let coefficients = [];
+        let currentCenter = 0;
+        let inputError = '';
+
+        function functionValue(x) {
+            if (!f) return NaN;
+            try {
+                const value = f(x);
+                return Number.isFinite(value) ? value : NaN;
+            } catch (error) {
+                return NaN;
+            }
+        }
+
+        function factorial(n) {
+            let value = 1;
+            for (let k = 2; k <= n; k++) value *= k;
+            return value;
+        }
+
+        function taylorValue(x) {
+            if (!coefficients.length) return NaN;
+            const dx = x - currentCenter;
+            let result = 0;
+            let power = 1;
+
+            for (let k = 0; k < coefficients.length; k++) {
+                result += coefficients[k] * power;
+                power *= dx;
+            }
+            return result;
+        }
+
+        function formatNumber(value, digits = 4) {
+            if (!Number.isFinite(value)) return '\u2013';
+            if (Math.abs(value) < Math.pow(10, -digits)) return '0';
+            const rounded = Number(value.toFixed(digits));
+            return Object.is(rounded, -0) ? '0' : rounded.toString();
+        }
+
+        function latexNumber(value, digits = 4) {
+            const text = formatNumber(Math.abs(value), digits);
+            return text === '\u2013' ? text : text;
+        }
+
+        function polynomialLatex() {
+            if (!coefficients.length || inputError) return '';
+
+            const terms = [];
+            const center = currentCenter;
+            const centerText = formatNumber(Math.abs(center), 2);
+            let base = 'x';
+            if (Math.abs(center) >= 1e-10) {
+                base = center > 0 ? '(x-' + centerText + ')' : '(x+' + centerText + ')';
+            }
+
+            for (let k = 0; k < coefficients.length; k++) {
+                const coefficient = coefficients[k];
+                if (!Number.isFinite(coefficient) || Math.abs(coefficient) < 1e-10) continue;
+
+                const sign = coefficient < 0 ? '-' : '+';
+                const magnitude = Math.abs(coefficient);
+                let term = '';
+
+                if (k === 0) {
+                    term = latexNumber(magnitude);
+                } else {
+                    if (Math.abs(magnitude - 1) > 1e-10) term += latexNumber(magnitude) + '\\,';
+                    term += k === 1 ? base : base + '^{' + k + '}';
+                }
+
+                terms.push({ sign, term });
+            }
+
+            if (!terms.length) return '0';
+
+            const visibleTerms = terms.slice(0, 6);
+            let latex = visibleTerms.map((item, index) => {
+                if (index === 0) return (item.sign === '-' ? '-' : '') + item.term;
+                return item.sign + item.term;
+            }).join('');
+
+            if (terms.length > visibleTerms.length) latex += '+\\cdots';
+            return latex;
+        }
+
+        // --- Controls on the board ---
+        const inputF = board.create('input', [-7.55, 6.0, functionExpression, '\\(f(x)=\\) '], {
+            cssStyle: 'width:120px;',
+            frozen: true,
+            fixed: true
+        });
+
+        const centerSlider = board.create('slider', [
+            [-7.45, 5.08], [-4.15, 5.08], [-6, 0, 6]
+        ], {
+            name: '\\(x_0\\)',
+            snapWidth: 0.1,
+            withTicks: false,
+            withLabel: false,
+            fixed: false
+        });
+
+        board.create('text', [-3.88, 5.08, () => {
+            return '\\(x_0=' + formatNumber(centerSlider.Value(), 1) + '\\)';
+        }], {
+            anchorX: 'left',
+            anchorY: 'middle',
+            fixed: true
+        });
+
+        const orderSlider = board.create('slider', [
+            [-7.45, 4.25], [-4.15, 4.25], [1, 1, MAX_ORDER]
+        ], {
+            name: '\\(n\\)',
+            snapWidth: 1,
+            withTicks: true,
+            withLabel: false
+        });
+
+        board.create('text', [-3.88, 4.25, () => {
+            return '\\(n=' + Math.round(orderSlider.Value()) + '\\)';
+        }], {
+            anchorX: 'left',
+            anchorY: 'middle',
+            fixed: true
+        });
+
+        const errorCheckbox = board.create('checkbox', [-7.55, 3.42, 'Abweichung anzeigen'], {
+            checked: false,
+            fixed: true,
+            strokeColor: COLORS.error
+        });
+
+        const definitionCheckbox = board.create('checkbox', [-7.55, 2.73, 'Definition anzeigen'], {
+            checked: false,
+            fixed: true,
+            strokeColor: '#333333'
+        });
+
+        // --- Graphs and geometric elements ---
+        board.create('functiongraph', [x => functionValue(x)], {
+            name: '\\(f\\)',
+            withLabel: true,
+            strokeColor: COLORS.function,
+            strokeWidth: 2.5,
+            highlight: false,
+            label: { position: 'rt' }
+        });
+
+        board.create('functiongraph', [x => taylorValue(x)], {
+            name: '\\(T_n\\)',
+            withLabel: true,
+            strokeColor: COLORS.polynomial,
+            strokeWidth: 2.5,
+            highlight: false,
+            label: { position: 'rt' }
+        });
+
+        const centerOnAxis = board.create('point', [
+            () => centerSlider.Value(),
+            0
+        ], {
+            name: '\\(x_0\\)',
+            size: 3,
+            fixed: true,
+            strokeColor: COLORS.center,
+            fillColor: 'white',
+            label: { offset: [-8, -23] }
+        });
+
+        const centerOnGraph = board.create('point', [
+            () => centerSlider.Value(),
+            () => functionValue(centerSlider.Value())
+        ], {
+            name: '\\(A\\)',
+            size: 4,
+            fixed: true,
+            strokeColor: COLORS.center,
+            fillColor: COLORS.center,
+            label: { offset: [8, 12] }
+        });
+
+        board.create('segment', [centerOnAxis, centerOnGraph], {
+            strokeColor: COLORS.center,
+            strokeWidth: 1.5,
+            dash: 2,
+            fixed: true,
+            highlight: false
+        });
+
+        // A movable comparison position for displaying the approximation error.
+        const comparisonPoint = board.create('glider', [2, 0, board.defaultAxes.x], {
+            name: '\\(x\\)',
+            size: 4,
+            strokeColor: COLORS.error,
+            fillColor: 'white',
+            label: { offset: [-4, -24] },
+            visible: () => errorCheckbox.Value()
+        });
+
+        const pointOnFunction = board.create('point', [
+            () => comparisonPoint.X(),
+            () => functionValue(comparisonPoint.X())
+        ], {
+            name: '',
+            size: 3,
+            fixed: true,
+            strokeColor: COLORS.function,
+            fillColor: COLORS.function,
+            visible: () => errorCheckbox.Value()
+        });
+
+        const pointOnPolynomial = board.create('point', [
+            () => comparisonPoint.X(),
+            () => taylorValue(comparisonPoint.X())
+        ], {
+            name: '',
+            size: 3,
+            fixed: true,
+            strokeColor: COLORS.polynomial,
+            fillColor: COLORS.polynomial,
+            visible: () => errorCheckbox.Value()
+        });
+
+        board.create('segment', [pointOnFunction, pointOnPolynomial], {
+            strokeColor: COLORS.error,
+            strokeWidth: 4,
+            fixed: true,
+            highlight: false,
+            visible: () => errorCheckbox.Value()
+        });
+
+        // --- Live descriptions ---
+        board.create('text', [-7.55, 1.98, () => {
+            if (inputError) return '<span style="color:#b00020">' + inputError + '</span>';
+            return '<span style="color:' + COLORS.function + '"><strong>Ursprüngliche Funktion</strong><br>' +
+                '\\(f(x)=' + functionLatex + '\\)</span>';
+        }], {
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true
+        });
+
+        board.create('text', [-7.55, 0.90, () => {
+            if (inputError) return '';
+            return '<span style="color:' + COLORS.polynomial + '"><strong>Taylor-Polynom ' +
+                Math.round(orderSlider.Value()) + '. Ordnung um \\(x_0=' +
+                formatNumber(centerSlider.Value(), 1) + '\\)</strong><br>' +
+                '\\(T_{' + Math.round(orderSlider.Value()) + '}(x)=' + polynomialLatex() + '\\)</span>';
+        }], {
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true
+        });
+
+        board.create('text', [-7.55, -0.62, () => {
+            if (!errorCheckbox.Value() || inputError) return '';
+            const x = comparisonPoint.X();
+            const error = Math.abs(functionValue(x) - taylorValue(x));
+            return '<span style="color:' + COLORS.error + '">Abweichung bei \\(x=' +
+                formatNumber(x, 2) + '\\):<br>' +
+                '\\(|f(x)-T_n(x)|=' + formatNumber(error, 4) + '\\)</span>';
+        }], {
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true
+        });
+
+        board.create('text', [-0.25, 6.05, () => {
+            if (!definitionCheckbox.Value() || inputError) return '';
+            return '<div style="padding:8px 11px;background:rgba(255,255,255,.92);border:1px solid #aaa;border-radius:5px">' +
+                '<strong>Definition:</strong>&nbsp; ' +
+                '\\(T_n(x)=\\displaystyle\\sum_{k=0}^{n}' +
+                '\\frac{f^{(k)}(x_0)}{k!}(x-x_0)^k\\)' +
+                '</div>';
+        }], {
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true
+        });
+
+        function buildDerivativeExpressions(expression) {
+            const expressions = [nerdamer(expression).text()];
+            for (let k = 1; k <= MAX_ORDER; k++) {
+                expressions.push(nerdamer.diff(expressions[k - 1], 'x').text());
+            }
+            return expressions;
+        }
+
+        function updateTaylorCoefficients() {
+            const n = Math.round(orderSlider.Value());
+            currentCenter = centerSlider.Value();
+            const nextCoefficients = [];
+
+            try {
+                for (let k = 0; k <= n; k++) {
+                    const derivativeValue = Number(
+                        nerdamer(derivativeExpressions[k]).evaluate({ x: currentCenter }).text()
+                    );
+                    if (!Number.isFinite(derivativeValue)) throw new Error('Non-finite derivative');
+                    nextCoefficients.push(derivativeValue / factorial(k));
+                }
+                coefficients = nextCoefficients;
+                inputError = '';
+            } catch (error) {
+                coefficients = [];
+                inputError = 'Das Taylor-Polynom konnte nicht berechnet werden.';
+            }
+
+            board.update();
+        }
+
+        function parseFunction() {
+            const expression = inputF.Value().trim();
+            let parsedFunction;
+            let parsedDerivatives;
+            let parsedLatex;
+
+            try {
+                parsedFunction = board.jc.snippet(expression, true, 'x', false);
+                const testValues = [-1, 0, 1].map(value => parsedFunction(value));
+                if (!testValues.some(Number.isFinite)) throw new Error('No finite values');
+                parsedDerivatives = buildDerivativeExpressions(expression);
+                parsedLatex = nerdamer(expression).toTeX();
+            } catch (error) {
+                inputError = 'Die Funktion konnte nicht gelesen werden.';
+                board.update();
+                return false;
+            }
+
+            functionExpression = expression;
+            functionLatex = parsedLatex;
+            f = parsedFunction;
+            derivativeExpressions = parsedDerivatives;
+            inputError = '';
+            updateTaylorCoefficients();
+            return true;
+        }
+
+        inputF.on('up', parseFunction);
+        centerSlider.on('drag', updateTaylorCoefficients);
+        centerSlider.on('up', updateTaylorCoefficients);
+        orderSlider.on('drag', updateTaylorCoefficients);
+        orderSlider.on('up', updateTaylorCoefficients);
+        errorCheckbox.on('change', () => board.update());
+        definitionCheckbox.on('change', () => board.update());
+
+        if (inputF.rendNodeInput) {
+            inputF.rendNodeInput.setAttribute('aria-label', 'Funktion f von x');
+            inputF.rendNodeInput.addEventListener('keydown', event => {
+                if (event.key === 'Enter') parseFunction();
+            });
+            inputF.rendNodeInput.addEventListener('blur', parseFunction);
+        }
+
+        derivativeExpressions = buildDerivativeExpressions(functionExpression);
+        updateTaylorCoefficients();
+    </script>
+</body>
+
+</html>

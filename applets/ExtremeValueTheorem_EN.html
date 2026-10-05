@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extremwertsatz – Interaktive Übung mit JSXGraph</title>
+<title>Extreme Value Theorem – Interactive Exercise with JSXGraph</title>
 
 <!-- =========================================================
      MathJax
@@ -120,47 +120,47 @@ body {
 
 
 <div id="intro">
-    <h2>Der Extremwertsatz</h2>
+    <h2>The Extreme Value Theorem</h2>
 
     <div id="explanation">
         <p>
-            In dieser Ansicht kannst du experimentell untersuchen, welche
-            Voraussetzungen die Existenz globaler Extremwerte garantieren und
-            was geschehen kann, wenn eine dieser Voraussetzungen fehlt.
+            In this applet, you can explore which assumptions guarantee the
+            existence of global extrema and what can happen when one of these
+            assumptions is not satisfied.
         </p>
 
         <p>
-            Wähle eine Funktion, verschiebe die Intervallgrenzen \(a\) und \(b\)
-            direkt auf der \(x\)-Achse und schalte zwischen dem abgeschlossenen
-            Intervall \([a,b]\) und dem offenen Intervall \((a,b)\) um.
+            Select a function, move the interval endpoints \(a\) and \(b\)
+            directly along the \(x\)-axis, and switch between the closed
+            interval \([a,b]\) and the open interval \((a,b)\).
         </p>
 
-        <p><strong>Untersuche:</strong></p>
+        <p><strong>Explore:</strong></p>
 
         <ol>
             <li>
-                Wo liegen für \(f(x)=x\) auf \([a,b]\) das globale Minimum
-                und das globale Maximum?
+                Where are the global minimum and global maximum of
+                \(f(x)=x\) on \([a,b]\)?
             </li>
             <li>
-                Was verändert sich für \(f(x)=x\), wenn das Intervall offen ist?
+                What changes for \(f(x)=x\) when the interval is open?
             </li>
             <li>
-                Können die globalen Extremwerte von
-                \(f(x)=\frac{(x-1)(x+2)(x-2)}{8}\) im Inneren des Intervalls liegen?
+                Can the global extrema of
+                \(f(x)=\frac{(x-1)(x+2)(x-2)}{8}\) lie in the interior of the interval?
             </li>
             <li>
-                Finde für \(f(x)=|x-1|\) ein offenes Intervall, auf dem trotzdem
-                ein globales Minimum existiert. Widerspricht das dem Extremwertsatz?
+                Find an open interval on which \(f(x)=|x-1|\) nevertheless has
+                a global minimum. Does this contradict the Extreme Value Theorem?
             </li>
             <li>
-                Wähle die Sprungfunktion und das abgeschlossene Intervall
-                \([-1,1]\). Weshalb besitzt die Funktion dort kein globales
-                Maximum, obwohl das Intervall abgeschlossen und beschränkt ist?
+                Select the step function and the closed interval \([-1,1]\).
+                Why does the function have no global maximum there, even though
+                the interval is closed and bounded?
             </li>
             <li>
-                Formuliere den Extremwertsatz mit eigenen Worten und nenne seine
-                entscheidenden Voraussetzungen.
+                State the Extreme Value Theorem in your own words and identify
+                its essential assumptions.
             </li>
         </ol>
     </div>
@@ -169,7 +169,7 @@ body {
 
 <div id="jxgbox"
      class="jxgbox"
-     aria-label="Interaktive Darstellung zum Extremwertsatz">
+     aria-label="Interactive visualisation of the Extreme Value Theorem">
 </div>
 
 
@@ -381,7 +381,7 @@ const functionLabel = board.create('text', [
 
     -5.75,
     4.65,
-    'Funktion $f(x)$:'
+    'Function $f(x)$:'
 
 ], {
 
@@ -486,7 +486,7 @@ const buttonJump = board.create('button', [
     -2.1,
     4.15,
 
-    'Sprung',
+    'step',
 
     function () {
 
@@ -513,7 +513,7 @@ const closedCheckbox = board.create('checkbox', [
     -5.75,
     3.65,
 
-    'abgeschlossenes Intervall [a,b]'
+    'closed interval [a,b]'
 
 ], {
 
@@ -982,26 +982,26 @@ function describeExtremaExistence(extrema) {
 
     if (extrema.min !== null && extrema.max !== null) {
 
-        return '$f$ besitzt in der aktuellen Einstellung ein globales Minimum und ein globales Maximum.';
+        return '$f$ has both a global minimum and a global maximum with the current settings.';
 
     }
 
 
     if (extrema.min !== null) {
 
-        return '$f$ besitzt in der aktuellen Einstellung ein globales Minimum, aber kein globales Maximum.';
+        return '$f$ has a global minimum but no global maximum with the current settings.';
 
     }
 
 
     if (extrema.max !== null) {
 
-        return '$f$ besitzt in der aktuellen Einstellung kein globales Minimum, aber ein globales Maximum.';
+        return '$f$ has no global minimum but does have a global maximum with the current settings.';
 
     }
 
 
-    return '$f$ besitzt in der aktuellen Einstellung weder ein globales Minimum noch ein globales Maximum.';
+    return '$f$ has neither a global minimum nor a global maximum with the current settings.';
 
 }
 
@@ -1484,7 +1484,7 @@ function updateScene() {
 
         ], {
 
-            name: 'globales Minimum',
+            name: 'global minimum',
 
             size: 4,
 
@@ -1521,7 +1521,7 @@ function updateScene() {
 
         ], {
 
-            name: 'globales Maximum',
+            name: 'global maximum',
 
             size: 4,
 
@@ -1563,9 +1563,9 @@ function updateScene() {
     let html = `
 
         <p>
-            <strong>Aktuelle Einstellungen</strong><br>
-            Funktion: ${describeFunction(currentFuncId)}<br>
-            Intervall: ${interval}
+            <strong>Current settings</strong><br>
+            Function: ${describeFunction(currentFuncId)}<br>
+            Interval: ${interval}
         </p>
 
     `;
@@ -1577,12 +1577,11 @@ function updateScene() {
         html += `
 
             <p style="margin-bottom: 0;">
-                <strong>Extremwertsatz:</strong><br>
-                Die Funktion $f$ ist auf dem betrachteten Intervall stetig und
-                das Intervall ist
-                <strong>abgeschlossen und beschränkt</strong>. Deshalb besitzt
-                $f$ auf diesem Intervall mindestens ein globales Minimum und
-                ein globales Maximum.
+                <strong>Extreme Value Theorem:</strong><br>
+                The function $f$ is continuous on the interval under
+                consideration, and the interval is
+                <strong>closed and bounded</strong>. Therefore, $f$ has at least
+                one global minimum and one global maximum on this interval.
             </p>
 
         `;
@@ -1594,12 +1593,11 @@ function updateScene() {
         html += `
 
             <p style="margin-bottom: 0;">
-                <strong>Achtung:</strong><br>
-                Das Intervall ist abgeschlossen und beschränkt, aber $f$ ist
-                bei $x=0$ nicht stetig. Der Extremwertsatz ist daher nicht
-                anwendbar. Die Funktionswerte nähern sich von links dem Wert
-                $0$, ohne ihn anzunehmen. Deshalb existiert kein globales
-                Maximum.<br><br>
+                <strong>Note:</strong><br>
+                The interval is closed and bounded, but $f$ is not continuous
+                at $x=0$. Therefore, the Extreme Value Theorem does not apply.
+                The function values approach $0$ from the left without ever
+                attaining it. Hence, no global maximum exists.<br><br>
                 ${describeExtremaExistence(extrema)}
             </p>
 
@@ -1611,16 +1609,15 @@ function updateScene() {
 
         const continuityWarning = continuousOnInterval
             ? ''
-            : ' Zudem ist $f$ bei $x=0$ nicht stetig.';
+            : ' In addition, $f$ is not continuous at $x=0$.';
 
         html += `
 
             <p style="margin-bottom: 0;">
-                <strong>Achtung:</strong><br>
-                Das Intervall ist nicht abgeschlossen. Der Extremwertsatz ist
-                daher nicht anwendbar.${continuityWarning} Das schliesst globale
-                Extremwerte nicht grundsätzlich aus; ihre Existenz wird nur
-                nicht garantiert.<br><br>
+                <strong>Note:</strong><br>
+                The interval is not closed. Therefore, the Extreme Value Theorem
+                does not apply.${continuityWarning} This does not rule out global
+                extrema; their existence is simply not guaranteed.<br><br>
                 ${describeExtremaExistence(extrema)}
             </p>
 

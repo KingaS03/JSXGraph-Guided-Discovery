@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grenzwerte und Stetigkeit – JSXGraph</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            color: #222;
+        }
+
+        #intro,
+        #jxgbox {
+            width: min(900px, calc(100vw - 32px));
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #intro {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #intro h2 {
+            margin-bottom: 8px;
+        }
+
+        #explanation {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        #explanation ol {
+            margin-bottom: 0;
+        }
+
+        #jxgbox {
+            height: min(550px, 67vw);
+            min-height: 440px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+
+        .JXGtext,
+        .JXGinput,
+        .JXGbutton {
+            font-family: sans-serif !important;
+        }
+
+        @media (max-width: 650px) {
+            #jxgbox {
+                height: 520px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro">
+        <h2>Grenzwerte und Stetigkeit</h2>
+
+        <div id="explanation">
+            <p>
+                In dieser Ansicht kannst du untersuchen, wie sich die Funktionswerte
+                verhalten, wenn sich \(x\) von links und von rechts einer Stelle \(x_0\) nähert.
+            </p>
+
+            <p>
+                Verkleinere mit dem Schieberegler den Abstand \(h\). Dabei nähern sich
+                \(x_{\mathrm L}=x_0-h\) und \(x_{\mathrm R}=x_0+h\) gleichzeitig an \(x_0\) an.
+                Wechsle danach zwischen den verschiedenen Beispielen.
+            </p>
+
+            <p><strong>Untersuche:</strong></p>
+            <ol>
+                <li>Welchem Wert nähert sich \(f(x_{\mathrm L})\)? Welchem Wert nähert sich \(f(x_{\mathrm R})\)?</li>
+                <li>Stimmen der linksseitige und der rechtsseitige Grenzwert überein?</li>
+                <li>Welche Rolle spielt der Funktionswert \(f(x_0)\)?</li>
+                <li>Formuliere eine Vermutung, wann \(f\) in \(x_0\) stetig ist.</li>
+                <li>Blende anschliessend das Ergebnis ein und überprüfe deine Vermutung.</li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="jxgbox" class="jxgbox" aria-label="Interaktive Darstellung zu Grenzwerten und Stetigkeit"></div>
+
+    <script>
+        'use strict';
+        JXG.Options.text.useMathJax = true;
+
+        const COLORS = {
+            function: '#1558d6',
+            left: '#e4571e',
+            right: '#087830',
+            center: '#8a3ffc',
+            guide: '#666666',
+            limit: '#d41473'
+        };
+
+        const examples = [
+            {
+                key: 'continuous',
+                title: 'Stetige Funktion',
+                formula: '\\(f(x)=\\frac14(x-x_0)^2+1\\)',
+                leftLimit: 1,
+                rightLimit: 1,
+                valueAtCenter: 1,
+                conclusion: 'stetig'
+            },
+            {
+                key: 'removable',
+                title: 'Hebbare Unstetigkeit',
+                formula: '\\(f(x)=\\frac14(x-x_0)^2+1\\) für \\(x\\ne x_0\\), \\(f(x_0)=3\\)',
+                leftLimit: 1,
+                rightLimit: 1,
+                valueAtCenter: 3,
+                conclusion: 'nicht stetig'
+            },
+            {
+                key: 'jump',
+                title: 'Sprungstelle',
+                formula: '\\(f(x)=0.35(x-x_0)+0.5\\) links, \\(f(x)=-0.2(x-x_0)+2.5\\) rechts',
+                leftLimit: 0.5,
+                rightLimit: 2.5,
+                valueAtCenter: 1.5,
+                conclusion: 'nicht stetig'
+            },
+            {
+                key: 'pole',
+                title: 'Polstelle',
+                formula: '\\(f(x)=\\dfrac{1}{x-x_0}\\)',
+                leftLimit: -Infinity,
+                rightLimit: Infinity,
+                valueAtCenter: NaN,
+                conclusion: 'nicht stetig'
+            },
+            {
+                key: 'oscillation',
+                title: 'Oszillation',
+                formula: '\\(f(x)=1+\\sin\\!\\left(\\dfrac{1}{x-x_0}\\right)\\) für \\(x\\ne x_0\\), \\(f(x_0)=1\\)',
+                leftLimit: NaN,
+                rightLimit: NaN,
+                valueAtCenter: 1,
+                conclusion: 'nicht stetig'
+            }
+        ];
+
+        let exampleIndex = 0;
+
+        const board = JXG.JSXGraph.initBoard('jxgbox', {
+            boundingbox: [-8, 8, 10, -5.5],
+            axis: true,
+            showNavigation: true,
+            showCopyright: false,
+            keepAspectRatio: false,
+            pan: { enabled: true },
+            zoom: { wheel: true, needShift: true }
+        });
+
+        // Creative Commons signature in the bottom-left corner.
+        board.create('text', [
+            function () {
+                const bb = board.getBoundingBox();
+                return bb[0] + 0.01 * (bb[2] - bb[0]);
+            },
+            function () {
+                const bb = board.getBoundingBox();
+                return bb[3] + 0.01 * (bb[1] - bb[3]);
+            },
+            '© 2026 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            strokeColor: '#666666',
+            opacity: 0.6,
+            highlight: false
+        });
+
+        function currentExample() {
+            return examples[exampleIndex];
+        }
+
+        function center() {
+            return centerSlider.Value();
+        }
+
+        function distance() {
+            return hSlider.Value();
+        }
+
+        function xLeft() {
+            return center() - distance();
+        }
+
+        function xRight() {
+            return center() + distance();
+        }
+
+        function functionValueAwayFromCenter(x) {
+            const t = x - center();
+            const key = currentExample().key;
+
+            if (key === 'continuous' || key === 'removable') return 0.25 * t * t + 1;
+            if (key === 'jump') return t < 0 ? 0.35 * t + 0.5 : -0.2 * t + 2.5;
+            if (key === 'pole') return 1 / t;
+            if (key === 'oscillation') return 1 + Math.sin(1 / t);
+            return NaN;
+        }
+
+        function plottedValue(x) {
+            const t = x - center();
+            const key = currentExample().key;
+
+            if (key !== 'continuous' && key !== 'removable') return NaN;
+            if (Math.abs(t) < 1e-7 && key === 'removable') return NaN;
+            return 0.25 * t * t + 1;
+        }
+
+        function leftBranchValue(x) {
+            const t = x - center();
+            const key = currentExample().key;
+            if (key === 'jump') return 0.35 * t + 0.5;
+            if (key === 'pole') return 1 / t;
+            if (key === 'oscillation') return 1 + Math.sin(1 / t);
+            return NaN;
+        }
+
+        function rightBranchValue(x) {
+            const t = x - center();
+            const key = currentExample().key;
+            if (key === 'jump') return -0.2 * t + 2.5;
+            if (key === 'pole') return 1 / t;
+            if (key === 'oscillation') return 1 + Math.sin(1 / t);
+            return NaN;
+        }
+
+        function branchGap() {
+            const key = currentExample().key;
+            return key === 'pole' || key === 'oscillation' ? 0.015 : 0;
+        }
+
+        function functionValueAtCenter() {
+            return currentExample().valueAtCenter;
+        }
+
+        function leftApproachValue() {
+            return functionValueAwayFromCenter(xLeft());
+        }
+
+        function rightApproachValue() {
+            return functionValueAwayFromCenter(xRight());
+        }
+
+        function finiteOrFallback(value, fallback = 0) {
+            return Number.isFinite(value) ? value : fallback;
+        }
+
+        function formatNumber(value, digits = 3) {
+            if (value === Infinity) return '+\\infty';
+            if (value === -Infinity) return '-\\infty';
+            if (!Number.isFinite(value)) return '\\text{existiert nicht}';
+            if (Math.abs(value) < Math.pow(10, -digits)) return '0';
+            const rounded = Number(value.toFixed(digits));
+            return Object.is(rounded, -0) ? '0' : rounded.toString();
+        }
+
+        function limitExists() {
+            const example = currentExample();
+            return Number.isFinite(example.leftLimit) &&
+                Number.isFinite(example.rightLimit) &&
+                Math.abs(example.leftLimit - example.rightLimit) < 1e-10;
+        }
+
+        function commonLimit() {
+            return limitExists() ? currentExample().leftLimit : NaN;
+        }
+
+        // --- Board controls ---
+        board.create('button', [-7.55, 7.50, 'Beispiel wechseln', function () {
+            exampleIndex = (exampleIndex + 1) % examples.length;
+            board.update();
+        }], {
+            cssStyle: 'width:145px;',
+            fixed: true,
+            frozen: true
+        });
+
+        board.create('text', [-3.80, 7.52, () => {
+            return '<strong>' + currentExample().title + '</strong>';
+        }], {
+            anchorX: 'left',
+            anchorY: 'middle',
+            fixed: true,
+            frozen: true
+        });
+
+        board.create('text', [-7.55, 6.95, () => currentExample().formula], {
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true,
+            frozen: true,
+            fontSize: 13
+        });
+
+        const centerSlider = board.create('slider', [
+            [-7.45, 5.70], [-4.25, 5.70], [0, 3, 5]
+        ], {
+            name: '\\(x_0\\)',
+            snapWidth: 0.1,
+            withTicks: false,
+            withLabel: false
+        });
+
+        board.create('text', [-3.98, 5.70, () => {
+            return '\\(x_0=' + formatNumber(center(), 1) + '\\)';
+        }], {
+            anchorX: 'left',
+            anchorY: 'middle',
+            fixed: true
+        });
+
+        const hSlider = board.create('slider', [
+            [-7.45, 5.05], [-4.25, 5.05], [0.05, 2.5, 3]
+        ], {
+            name: '\\(h\\)',
+            snapWidth: 0.05,
+            withTicks: false,
+            withLabel: false
+        });
+
+        board.create('text', [-3.98, 5.05, () => {
+            return '\\(h=' + formatNumber(distance(), 2) + '\\)';
+        }], {
+            anchorX: 'left',
+            anchorY: 'middle',
+            fixed: true
+        });
+
+        const resultCheckbox = board.create('checkbox', [-7.55, 4.25, 'Ergebnis anzeigen'], {
+            checked: false,
+            fixed: true,
+            frozen: true,
+            strokeColor: COLORS.limit
+        });
+
+        // --- Function graph and the point x_0 ---
+        board.create('functiongraph', [x => plottedValue(x)], {
+            name: '\\(f\\)',
+            withLabel: true,
+            strokeColor: COLORS.function,
+            strokeWidth: 2.5,
+            highlight: false,
+            label: { position: 'rt' },
+            visible: () => ['continuous', 'removable'].includes(currentExample().key)
+        });
+
+        board.create('functiongraph', [
+            x => leftBranchValue(x),
+            () => board.getBoundingBox()[0],
+            () => center() - branchGap()
+        ], {
+            name: '',
+            withLabel: false,
+            strokeColor: COLORS.function,
+            strokeWidth: 2.5,
+            highlight: false,
+            visible: () => ['jump', 'pole', 'oscillation'].includes(currentExample().key)
+        });
+
+        board.create('functiongraph', [
+            x => rightBranchValue(x),
+            () => center() + branchGap(),
+            () => board.getBoundingBox()[2]
+        ], {
+            name: '\\(f\\)',
+            withLabel: true,
+            strokeColor: COLORS.function,
+            strokeWidth: 2.5,
+            highlight: false,
+            label: { position: 'rt' },
+            visible: () => ['jump', 'pole', 'oscillation'].includes(currentExample().key)
+        });
+
+        const x0Point = board.create('point', [() => center(), 0], {
+            name: '\\(x_0\\)',
+            size: 3,
+            fixed: true,
+            strokeColor: COLORS.center,
+            fillColor: 'white',
+            label: { offset: [-8, -24] }
+        });
+
+        board.create('line', [
+            () => [center(), -100],
+            () => [center(), 100]
+        ], {
+            straightFirst: false,
+            straightLast: false,
+            strokeColor: COLORS.center,
+            strokeWidth: 1.3,
+            dash: 2,
+            fixed: true,
+            highlight: false,
+            visible: () => currentExample().key !== 'pole'
+        });
+
+        // --- Points approaching x_0 from the left and right ---
+        const xLPoint = board.create('point', [() => xLeft(), 0], {
+            name: '\\(x_{\\mathrm L}\\)',
+            size: 3,
+            fixed: true,
+            strokeColor: COLORS.left,
+            fillColor: 'white',
+            label: { offset: [-14, -24] }
+        });
+
+        const xRPoint = board.create('point', [() => xRight(), 0], {
+            name: '\\(x_{\\mathrm R}\\)',
+            size: 3,
+            fixed: true,
+            strokeColor: COLORS.right,
+            fillColor: 'white',
+            label: { offset: [-14, -24] }
+        });
+
+        const leftGraphPoint = board.create('point', [
+            () => xLeft(),
+            () => leftApproachValue()
+        ], {
+            name: '\\(P_{\\mathrm L}\\)',
+            size: 4,
+            fixed: true,
+            strokeColor: COLORS.left,
+            fillColor: COLORS.left,
+            label: { offset: [-27, 13] }
+        });
+
+        const rightGraphPoint = board.create('point', [
+            () => xRight(),
+            () => rightApproachValue()
+        ], {
+            name: '\\(P_{\\mathrm R}\\)',
+            size: 4,
+            fixed: true,
+            strokeColor: COLORS.right,
+            fillColor: COLORS.right,
+            label: { offset: [8, 13] }
+        });
+
+        board.create('segment', [xLPoint, leftGraphPoint], {
+            strokeColor: COLORS.left,
+            strokeWidth: 1.5,
+            dash: 2,
+            fixed: true,
+            highlight: false
+        });
+
+        board.create('segment', [xRPoint, rightGraphPoint], {
+            strokeColor: COLORS.right,
+            strokeWidth: 1.5,
+            dash: 2,
+            fixed: true,
+            highlight: false
+        });
+
+        // Open endpoint(s) that make holes and jumps visible.
+        board.create('point', [
+            () => center(),
+            () => finiteOrFallback(currentExample().leftLimit)
+        ], {
+            name: '',
+            size: 5,
+            face: 'o',
+            fixed: true,
+            strokeWidth: 2,
+            strokeColor: COLORS.function,
+            fillColor: 'white',
+            visible: () => currentExample().key === 'removable' || currentExample().key === 'jump'
+        });
+
+        board.create('point', [
+            () => center(),
+            () => finiteOrFallback(currentExample().rightLimit)
+        ], {
+            name: '',
+            size: 5,
+            face: 'o',
+            fixed: true,
+            strokeWidth: 2,
+            strokeColor: COLORS.function,
+            fillColor: 'white',
+            visible: () => currentExample().key === 'jump'
+        });
+
+        // The actual value f(x_0), if it exists.
+        board.create('point', [
+            () => center(),
+            () => finiteOrFallback(functionValueAtCenter())
+        ], {
+            name: '\\(f(x_0)\\)',
+            size: 5,
+            fixed: true,
+            strokeColor: COLORS.center,
+            fillColor: COLORS.center,
+            label: { offset: [10, 10] },
+            visible: () => Number.isFinite(functionValueAtCenter())
+        });
+
+        // Vertical asymptote for the pole example.
+        board.create('line', [
+            () => [center(), -100],
+            () => [center(), 100]
+        ], {
+            straightFirst: false,
+            straightLast: false,
+            strokeColor: COLORS.function,
+            strokeWidth: 2,
+            dash: 2,
+            fixed: true,
+            highlight: false,
+            visible: () => currentExample().key === 'pole'
+        });
+
+        // Limit guides, visible only after the result is revealed.
+        board.create('segment', [
+            () => [center() - 3.2, finiteOrFallback(currentExample().leftLimit)],
+            () => [center(), finiteOrFallback(currentExample().leftLimit)]
+        ], {
+            strokeColor: COLORS.limit,
+            strokeWidth: 2,
+            dash: 2,
+            fixed: true,
+            highlight: false,
+            visible: () => resultCheckbox.Value() && Number.isFinite(currentExample().leftLimit)
+        });
+
+        board.create('segment', [
+            () => [center(), finiteOrFallback(currentExample().rightLimit)],
+            () => [center() + 3.2, finiteOrFallback(currentExample().rightLimit)]
+        ], {
+            strokeColor: COLORS.limit,
+            strokeWidth: 2,
+            dash: 2,
+            fixed: true,
+            highlight: false,
+            visible: () => resultCheckbox.Value() && Number.isFinite(currentExample().rightLimit)
+        });
+
+        // --- Live numerical observations ---
+        board.create('text', [-7.55, 3.45, () => {
+            return '<span style="color:' + COLORS.left + '"><strong>Annäherung von links:</strong><br>' +
+                '\\(x_{\\mathrm L}=' + formatNumber(xLeft(), 2) +
+                ',\\quad f(x_{\\mathrm L})=' + formatNumber(leftApproachValue(), 3) + '\\)</span>';
+        }], {
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true,
+            frozen: true
+        });
+
+        board.create('text', [-7.55, 2.25, () => {
+            return '<span style="color:' + COLORS.right + '"><strong>Annäherung von rechts:</strong><br>' +
+                '\\(x_{\\mathrm R}=' + formatNumber(xRight(), 2) +
+                ',\\quad f(x_{\\mathrm R})=' + formatNumber(rightApproachValue(), 3) + '\\)</span>';
+        }], {
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true,
+            frozen: true
+        });
+
+        board.create('text', [-7.55, 1.05,
+            '<span style="color:#555">Ziehe \\(h\\) nach links und beobachte:<br>' +
+            '\\(x_{\\mathrm L}\\to x_0^-\\) und \\(x_{\\mathrm R}\\to x_0^+\\).</span>'
+        ], {
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true,
+            frozen: true
+        });
+
+        function oneSidedLimitLine(x0Text, direction, value) {
+            const limitStart = '\\(\\displaystyle\\lim_{x\\to ' + x0Text + '^' + direction + '}f(x)';
+            if (!Number.isFinite(value) && value !== Infinity && value !== -Infinity) {
+                return limitStart + '\\text{ existiert nicht}\\)';
+            }
+            return limitStart + '=' + formatNumber(value) + '\\)';
+        }
+
+        function resultPanel() {
+            if (!resultCheckbox.Value()) return '';
+
+            const example = currentExample();
+            const x0Text = formatNumber(center(), 1);
+            const valueText = Number.isFinite(example.valueAtCenter)
+                ? formatNumber(example.valueAtCenter)
+                : '\\text{nicht definiert}';
+
+            let twoSided;
+            if (limitExists()) {
+                twoSided = '\\(\\displaystyle\\lim_{x\\to ' + x0Text + '}f(x)=' +
+                    formatNumber(commonLimit()) + '\\)';
+            } else {
+                twoSided = '\\(\\displaystyle\\lim_{x\\to ' + x0Text + '}f(x)\\) existiert nicht';
+            }
+
+            const continuous = limitExists() &&
+                Number.isFinite(example.valueAtCenter) &&
+                Math.abs(commonLimit() - example.valueAtCenter) < 1e-10;
+
+            return '<div style="width:295px;padding:9px 12px;background:rgba(255,255,255,.94);' +
+                'border:1px solid #aaa;border-radius:5px;line-height:1.65">' +
+                '<strong>Ergebnis bei \\(x_0=' + x0Text + '\\):</strong><br>' +
+                oneSidedLimitLine(x0Text, '-', example.leftLimit) + '<br>' +
+                oneSidedLimitLine(x0Text, '+', example.rightLimit) + '<br>' +
+                twoSided + '<br>' +
+                '\\(f(' + x0Text + ')=' + valueText + '\\)<br>' +
+                '<strong style="color:' + (continuous ? COLORS.right : '#b00020') + '">' +
+                (continuous ? 'Die Funktion ist in \\(x_0\\) stetig.' : 'Die Funktion ist in \\(x_0\\) nicht stetig.') +
+                '</strong><hr style="border:0;border-top:1px solid #ddd;margin:7px 0">' +
+                '\\(f\\text{ ist in }x_0\\text{ stetig}\\iff' +
+                '\\displaystyle\\lim_{x\\to x_0}f(x)=f(x_0)\\)' +
+                '</div>';
+        }
+
+        board.create('text', [4.05, 7.50, resultPanel], {
+            anchorX: 'left',
+            anchorY: 'top',
+            fixed: true,
+            frozen: true
+        });
+
+        resultCheckbox.on('change', () => board.update());
+        centerSlider.on('drag', () => board.update());
+        hSlider.on('drag', () => board.update());
+
+        board.update();
+    </script>
+</body>
+
+</html>

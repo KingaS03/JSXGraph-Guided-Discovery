@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profit Maximisation in Three Dimensions – JSXGraph</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <link href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js" type="text/javascript"
+        charset="UTF-8"></script>
+
+    <!-- MathJax -->
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            color: #222;
+        }
+
+        #intro,
+        #jxgbox3d {
+            width: min(900px, calc(100vw - 32px));
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        #intro {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #intro h2 {
+            margin: 0 0 8px;
+        }
+
+        #explanation {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        #explanation > p:first-child {
+            margin-top: 0;
+        }
+
+        #explanation ol {
+            margin-bottom: 0;
+            padding-left: 24px;
+        }
+
+        #explanation li + li {
+            margin-top: 5px;
+        }
+
+        .model-box {
+            margin: 14px 0;
+            padding: 10px 12px;
+            border-left: 4px solid #2166ac;
+            background: #eef5fb;
+        }
+
+        .model-box p {
+            margin: 0 0 8px;
+        }
+
+        .model-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        #jxgbox3d {
+            height: min(620px, 72vw);
+            min-height: 500px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+
+        .JXGtext,
+        .JXGinput,
+        .JXGbutton {
+            font-family: sans-serif !important;
+        }
+
+        @media (max-width: 650px) {
+            #jxgbox3d {
+                height: 560px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="intro">
+        <h2>The Profit Function as a Surface in \((t,Q,\pi)\)-Space</h2>
+
+        <div id="explanation">
+            <p>
+                In the two-dimensional visualisation, a separate profit function
+                in terms of \(Q\) is drawn for each fixed tax value \(t\). Here,
+                all these graphs are combined into a surface in three-dimensional
+                space.
+            </p>
+
+            <div class="model-box">
+                <p><strong>Model and Optimal Points</strong></p>
+                <p>
+                    \[
+                        \pi_t(Q)=-\frac{1}{600}Q^3+(50-t)Q-\frac{1000}{3},
+                        \qquad Q\in[0,300].
+                    \]
+                </p>
+                <p>
+                    For \(0\le t\le 50\),
+                    \(Q^*(t)=\sqrt{200(50-t)}\). The optimal points therefore
+                    form the space curve
+                    \[
+                        \bigl(t,Q^*(t),\pi_t(Q^*(t))\bigr).
+                    \]
+                    For a clearer visualisation, the values of \(Q\) and \(\pi\)
+                    are scaled in the coordinate system.
+                </p>
+            </div>
+
+            <p>
+                The blue curve is the intersection of the surface with the plane
+                corresponding to a fixed tax value. The red point marks the
+                maximum of this cross-section.
+            </p>
+
+            <p><strong>Explore:</strong></p>
+            <ol>
+                <li>
+                    Change \(t\). Which coordinate remains fixed on the blue
+                    cross-section, and which quantity varies along the curve?
+                </li>
+                <li>
+                    Observe the red maximum point, then display the curve of
+                    optimal points. What do the three coordinates of a point on
+                    this curve represent?
+                </li>
+                <li>
+                    Project the optimal curve onto the \(Q\pi\)-plane. What
+                    information is lost? Compare the projection with the curve
+                    of optimal points in the two-dimensional applet.
+                </li>
+                <li>
+                    Project the curve onto the \(tQ\)- and \(t\pi\)-planes. Which
+                    of the two projections represents \(Q^*(t)\), and which
+                    represents the maximal profit \(\pi_t(Q^*(t))\)?
+                </li>
+                <li>
+                    Explain how the three planar representations arise from the
+                    same space curve and which question is best answered by each
+                    projection.
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="jxgbox3d"
+         class="jxgbox"
+         aria-label="Three-dimensional visualisation of the profit function and its optimal points"></div>
+
+    <script>
+
+        // Define some colors, optimized for color blinds
+        var colors = [JXG.palette.blue, JXG.palette.red, JXG.palette.green, JXG.palette.black, JXG.palette.purple, JXG.palette.yellow, JXG.palette.skyblue];
+
+        cnt = 0;
+
+        JXG.Options.text.useMathJax = true;
+
+        // Make board global (as in your template)
+        var board = JXG.JSXGraph.initBoard('jxgbox3d', {
+            boundingbox: [-8, 8, 8, -8],
+            keepaspectratio: false,
+            //axis: false,
+            //pan: { enabled: false },
+            //showNavigation: true,
+            showCopyright: false,
+            xAxis: {
+                visible: true,
+                strokeColor: 'black',
+                label: {
+                    text: 't',
+                    strokeColor: 'black',
+                    offset: [10, -10]   // adjusts position in screen space
+                }
+            },
+            yAxis: {
+                visible: true,
+                strokeColor: 'black',
+                label: {
+                    text: 'Q',
+                    strokeColor: 'black',
+                    offset: [10, 10]
+                }
+            },
+            zAxis: {
+                visible: true,
+                strokeColor: 'black',
+                label: {
+                    text: '\\(\\pi\\)',
+                    strokeColor: 'black',
+                    offset: [0, 20],
+                    label: {
+                    parse: false,
+                    useMathJax: true
+                }
+            }
+            }
+        });
+
+        // Creative Commons signature (watermark)
+        const CCsignature = board.create('text', [
+            function () {
+                const bb = board.getBoundingBox();
+                const xmin = bb[0], xmax = bb[2];
+                return xmin + 0.01 * (xmax - xmin);
+            },
+            function () {
+                const bb = board.getBoundingBox();
+                const ymin = bb[3], ymax = bb[1];
+                return ymin + 0.01 * (ymax - ymin);
+            },
+            '© 2026 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            strokeColor: '#666',
+            opacity: 0.6,
+            highlight: false
+        });
+
+        // Ranges in 3D: t, Q, pi
+        var tRange = [0, 50];
+        var qRange = [0, 30]; //q is rescaled by 10^{-1} to make things run
+        var piRange = [0, 40]; //pi is rescaled by 10^{-2} to make things run
+
+        // 3D view: same structure as your code, but with real ranges
+        var view = board.create('view3d', [
+            [-2, -4],                 // 2D position of the 3D view on the board
+            [8, 8],                   // width/height of the 3D view in board coords
+            [tRange, qRange, piRange] // world box: [x-range, y-range, z-range]
+        ], {
+            xAxis: { visible: true, name: '$t$', strokeColor: 'black'},
+            yAxis: { visible: true, name: '$Q$', strokeColor: 'black' },
+            zAxis: { visible: true, name: '$\\pi$', strokeColor: 'black'},
+            xPlaneRear: { visible: true },
+            yPlaneRear: { visible: true },
+            zPlaneRear: {
+                visible: true,
+                fillOpacity: 0.1
+            },
+            projection: "central",
+            trackball: { enabled: false },
+            depthOrder: { enabled: true }
+        });
+
+        // Profit function pi(t,Q) 
+        function profit(t, Q) {
+            return -1 / 600 * Math.pow(Q, 3) + (50 - t) * Q - 1000 / 3;
+        }
+
+        // Plot the surface
+        var surface = view.create('functiongraph3d', [
+            function (t, Q) {
+                return 1 / 100 * profit(t, Q * 10);
+            },
+            tRange,
+            qRange
+        ], {
+            strokeColor: colors[cnt],
+            strokeWidth: 0.5,
+            stepsU: 50,
+            stepsV: 100
+        });
+
+        // Plot the surface with a different solution
+        /*  var surface = view.create('parametricsurface3d', [
+             // x = t, y = Q, z = pi(t,Q)
+             function (u, v) { return u; },
+             function (u, v) { return v; },
+             function (u, v) { return 1 / 100 * profit(u, v * 10); },
+             tRange,
+             qRange],
+             {
+                 strokeWidth: 0.5,
+                 strokeColor: 'green',
+                 fillColor: 'green',
+                 fillOpacity: 0.6,
+                 stepsU: 50,
+                 stepsV: 50
+             }); */
+
+        var tSlider = board.create('slider', [[-7, 7.5], [5, 7.5], [0, 10, 50]], { name: '\\(t\\)', frozen: true });
+
+        var sliceCurve = view.create('curve3d', [
+            () => tSlider.Value(),         // t = 10 fixed
+            (Q) => Q,         // Q
+            (Q) => 1 / 100 * profit(tSlider.Value(), 10 * Q),  // pi(t,Q)
+            [0, 100] //qRange
+        ], {
+            strokeWidth: 3,
+            strokeColor: '#0066cc'
+        });
+
+        // Optimal quantity Q*(t)
+        function qStar(t) {
+            const diff = 50 - t;
+            if (diff <= 0) return 0;
+            return Math.sqrt(200 * diff);
+        }
+
+        // Main maxpoint
+        var sliceMaxPoint = view.create('point3d', [
+            () => tSlider.Value(),
+            () => 1 / 10 * qStar(tSlider.Value()),
+            () => 1 / 100 * profit(tSlider.Value(), qStar(tSlider.Value()))],
+            {
+                size: 5,
+                strokeColor: 'red',
+                fillColor: 'red',
+                name: '',
+                withLabel: false
+            });
+
+        // Checkbox for the optimal curve
+        var optCurveCheckbox = board.create('checkbox',
+            [-7, 7, '\\(\\text{show curve of optimal points }(t,Q^*(t),\\pi_t(Q^*(t)))\\)'],
+            {
+                anchorX: 'left',
+                anchorY: 'top',
+                frozen: true,
+                fixed: true,
+                strokeColor: '#FF1493'
+            }
+        );
+
+        // Plot curve with optimal coordinates
+        var optimalCurve3D = view.create('curve3d', [
+            (t) => t,
+            (t) => 1 / 10 * qStar(t),
+            (t) => 1 / 100 * profit(t, qStar(t)),
+            tRange
+        ], {
+            strokeWidth: 3,
+            strokeColor: '#FF1493',
+            visible: () => optCurveCheckbox.Value()
+        });
+
+        // Checkbox for showing the third projection of the curve with optimal coordinates
+        var projCheckbox1 = board.create('checkbox',
+            [-6.3, 6.3, '\\(\\text{show projection onto the }Q\\pi\\text{-plane}\\)'],
+            {
+                anchorX: 'left',
+                anchorY: 'top',
+                frozen: true,
+                fixed: true,
+                strokeColor: '#32CD32',
+                visible: () => optCurveCheckbox.Value()
+            }
+        );
+
+        // 1) Projection onto (Q, π) plane: (0, Q*(t), π(Q*(t)))
+        const proj_QPi = view.create('curve3d', [
+            (t) => 0,
+            (t) => 1 / 10 * qStar(t),
+            (t) => 1 / 100 * profit(t, qStar(t)),
+            tRange
+        ], {
+            strokeWidth: 2,
+            strokeColor: '#32CD32',
+            visible: () => projCheckbox1.Value() && optCurveCheckbox.Value()
+        });
+
+        // 1. projection of the main MaxPoint
+        var projMaxPoint1 = view.create('point3d', [
+            () => 0,
+            () => 1 / 10 * qStar(tSlider.Value()),
+            () => 1 / 100 * profit(tSlider.Value(), qStar(tSlider.Value()))],
+            {
+                size: 3,
+                strokeColor: 'red',
+                fillColor: 'red',
+                name: '',
+                withLabel: false,
+                visible: () => projCheckbox1.Value() && optCurveCheckbox.Value()
+            });
+
+        // Checkbox for showing the first projection of the curve with optimal coordinates
+        var projCheckbox2 = board.create('checkbox',
+            [-6.3, 5.7, '\\(\\text{show projection onto the }tQ\\text{-plane}\\)'],
+            {
+                anchorX: 'left',
+                anchorY: 'top',
+                frozen: true,
+                fixed: true,
+                strokeColor: '#FF8C00',
+                visible: () => optCurveCheckbox.Value()
+            }
+        );
+
+        // 2) Projection onto (t, Q) plane: (t, Q*(t), 0)
+        const proj_tQ = view.create('curve3d', [
+            (t) => t,
+            (t) => 1 / 10 * qStar(t),
+            (t) => 0,
+            tRange
+        ], {
+            strokeWidth: 2,
+            strokeColor: '#FF8C00',
+            name: '$Q^*(t)$',
+            visible: () => projCheckbox2.Value() && optCurveCheckbox.Value()
+        });
+
+        // 2. Projection of the main MaxPoint
+        var projMaxPoint2 = view.create('point3d', [
+            () => tSlider.Value(),
+            () => 1 / 10 * qStar(tSlider.Value()),
+            () => 0],
+            {
+                size: 3,
+                strokeColor: 'red',
+                fillColor: 'red',
+                name: '',
+                withLabel: false,
+                visible: () => projCheckbox2.Value() && optCurveCheckbox.Value()
+            });
+
+        // Checkbox for showing the second projection of the curve with optimal coordinates
+        var projCheckbox3 = board.create('checkbox',
+            [-6.3, 5.1, '\\(\\text{show projection onto the }t\\pi\\text{-plane}\\)'],
+            {
+                anchorX: 'left',
+                anchorY: 'top',
+                frozen: true,
+                fixed: true,
+                strokeColor: '#7b3294',
+                visible: () => optCurveCheckbox.Value()
+            }
+        );
+
+        // 2) Projection onto (t, π) plane: (t, 0, π(Q*(t)))
+        const proj_tPi = view.create('curve3d', [
+            (t) => t,
+            (t) => 0,
+            (t) => 1 / 100 * profit(t, qStar(t)),
+            tRange
+        ], {
+            strokeWidth: 2,
+            strokeColor: '#7b3294',
+            visible: () => projCheckbox3.Value() && optCurveCheckbox.Value()
+        });
+
+        // 2. projection of the main MaxPoint
+        var projMaxPoint3 = view.create('point3d', [
+            () => tSlider.Value(),
+            () => 0,
+            () => 1 / 100 * profit(tSlider.Value(), qStar(tSlider.Value()))],
+            {
+                size: 3,
+                strokeColor: 'red',
+                fillColor: 'red',
+                name: '',
+                withLabel: false,
+                visible: () => projCheckbox3.Value() && optCurveCheckbox.Value()
+            });
+    </script>
+
+</body>
+
+</html>

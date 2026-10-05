@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gewinnmaximierung in zwei und drei Dimensionen – JSXGraph</title>
+
+    <!-- JSXGraph -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+    <!-- MathJax -->
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            color: #222;
+        }
+
+        #page-title,
+        #intro,
+        #intro3d,
+        #jxgbox,
+        #jxgbox_qpi,
+        #jxgbox3d {
+            width: min(900px, calc(100vw - 32px));
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        #page-title,
+        #intro,
+        #intro3d {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #page-title h1,
+        #intro h2,
+        #intro3d h2 {
+            margin: 0 0 8px;
+        }
+
+        #page-title h1 {
+            font-size: 26px;
+        }
+
+        #explanation,
+        #explanation3d,
+        .sync-note {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .sync-note {
+            margin: 0;
+            border-left: 4px solid #1b9e77;
+            background: #eef8f4;
+        }
+
+        #explanation > p:first-child,
+        #explanation3d > p:first-child {
+            margin-top: 0;
+        }
+
+        #explanation ol,
+        #explanation3d ol {
+            margin-bottom: 0;
+            padding-left: 24px;
+        }
+
+        #explanation li + li,
+        #explanation3d li + li {
+            margin-top: 5px;
+        }
+
+        .model-box {
+            margin: 14px 0;
+            padding: 10px 12px;
+            border-left: 4px solid #2166ac;
+            background: #eef5fb;
+        }
+
+        .model-box p {
+            margin: 0 0 8px;
+        }
+
+        .model-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        #jxgbox {
+            height: min(550px, 67vw);
+            min-height: 440px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        #jxgbox3d {
+            height: min(620px, 72vw);
+            min-height: 500px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+
+        /* Container for the two extra boards (Q*(t) and π(Q*(t))) */
+        #jxgbox_qpi {
+            height: 300px;
+            margin-top: 0;
+            margin-bottom: 20px;
+            display: none;
+            /* hidden by default, shown via checkbox */
+        }
+
+        #jxgbox_q,
+        #jxgbox_pi {
+            width: 49%;
+            height: 100%;
+            display: inline-block;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        #jxgbox_pi {
+            float: right;
+        }
+
+        .JXGtext,
+        .JXGinput,
+        .JXGbutton {
+            font-family: sans-serif !important;
+        }
+
+        @media (max-width: 650px) {
+            #jxgbox,
+            #jxgbox3d {
+                height: 520px;
+            }
+
+            #jxgbox_qpi {
+                height: 620px;
+            }
+
+            #jxgbox_q,
+            #jxgbox_pi {
+                width: 100%;
+                height: 300px;
+                display: block;
+                float: none;
+            }
+
+            #jxgbox_pi {
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header id="page-title">
+        <h1>Gewinnmaximierung in zwei und drei Dimensionen</h1>
+        <p class="sync-note">
+            Die beiden Schieberegler für (t) sind synchronisiert. Wenn du den
+            Steuerwert in einer Darstellung veränderst, wird er automatisch in
+            der anderen Darstellung übernommen.
+        </p>
+    </header>
+
+    <div id="intro">
+        <h2>1. Gewinnmaximierung bei einer Stücksteuer – 2D</h2>
+
+        <div id="explanation">
+            <p>
+                Für jeden fest gewählten Steuerwert \(t\) entscheidet das Unternehmen
+                über die Menge \(Q\). Dabei ist \(Q\) die
+                <strong>Entscheidungsvariable</strong> und \(t\) ein
+                <strong>Parameter</strong>: Verändert sich \(t\), verändert sich die
+                gesamte Gewinnfunktion.
+            </p>
+
+            <div class="model-box">
+                <p><strong>Modell und Optimum</strong></p>
+                <p>
+                    \[
+                        \pi_t(Q)=-\frac{1}{600}Q^3+(50-t)Q-\frac{1000}{3},
+                        \qquad Q\in[0,300].
+                    \]
+                </p>
+                <p>
+                    Für ein inneres Optimum liefert \(\pi_t'(Q)=0\) die Menge
+                    \(Q^*(t)=\sqrt{200(50-t)}\). Für \(t\ge 50\) liegt das
+                    beschränkte Maximum dagegen am Rand bei \(Q^*(t)=0\).
+                    Der zugehörige maximale Gewinn ist
+                    \(\pi_t\!\left(Q^*(t)\right)\).
+                </p>
+            </div>
+
+            <p>
+                Das Applet stellt diese Zusammenhänge in verschiedenen
+                Koordinatensystemen dar. Achte deshalb jeweils darauf, welche
+                Grössen auf den Achsen liegen.
+            </p>
+
+            <p><strong>Untersuche:</strong></p>
+            <ol>
+                <li>
+                    Verändere den Steuerwert \(t\). Wie verschieben sich das
+                    Maximum der blauen Gewinnfunktion, die optimale Menge
+                    \(Q^*(t)\) und der maximale Gewinn
+                    \(\pi_t(Q^*(t))\)?
+                </li>
+                <li>
+                    Erhöhe mit dem zweiten Schieberegler die Anzahl \(n\) der
+                    zusätzlich dargestellten Steuerwerte. Welche Kurve scheinen
+                    die zugehörigen Maximalpunkte zu bilden?
+                </li>
+                <li>
+                    Blende die Kurve der optimalen Punkte ein. Was bedeuten ihre
+                    Koordinaten \(\bigl(Q^*(t),\pi_t(Q^*(t))\bigr)\)? Warum ist
+                    diese Kurve noch nicht der Graph des maximalen Gewinns als
+                    Funktion von \(t\)?
+                </li>
+                <li>
+                    Blende anschliessend \(Q^*(t)\) und \(\pi_t(Q^*(t))\) als
+                    Funktionen von \(t\) ein. Was ist gegenüber der grünen Kurve anders?
+                    Vergleiche insbesondere die Grössen auf den horizontalen Achsen.
+                </li>
+                <li>
+                    Untersuche Werte von \(t\) nahe bei und oberhalb von \(50\).
+                    Weshalb liegt das Maximum dort bei \(Q=0\), obwohl die
+                    Bedingung erster Ordnung kein inneres Optimum mehr liefert?
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="jxgbox"
+         class="jxgbox"
+         aria-label="Zweidimensionale Darstellung der Gewinnfunktion und ihrer optimalen Punkte"></div>
+
+    <!-- NEW: second JSXGraph area with two sub-boards for Q*(t) and π(Q*(t)) -->
+    <div id="jxgbox_qpi">
+        <div id="jxgbox_q" class="jxgbox"></div>
+        <div id="jxgbox_pi" class="jxgbox"></div>
+    </div>
+
+    <div id="intro3d">
+        <h2>2. Die Gewinnfunktion als Fläche im \((t,Q,\pi)\)-Raum – 3D</h2>
+
+        <div id="explanation3d">
+            <p>
+                In der zweidimensionalen Darstellung wird für jeden festen
+                Steuerwert \(t\) eine eigene Gewinnfunktion in Abhängigkeit von
+                \(Q\) gezeichnet. Hier werden alle diese Graphen zu einer Fläche
+                im dreidimensionalen Raum zusammengefügt.
+            </p>
+
+            <div class="model-box">
+                <p><strong>Modell und optimale Punkte</strong></p>
+                <p>
+                    \[
+                        \pi_t(Q)=-\frac{1}{600}Q^3+(50-t)Q-\frac{1000}{3},
+                        \qquad Q\in[0,300].
+                    \]
+                </p>
+                <p>
+                    Im betrachteten Bereich \(0\le t\le 60\) gilt
+                    \[
+                        Q^*(t)=
+                        \begin{cases}
+                            \sqrt{200(50-t)}, & 0\le t<50,\\
+                            0, & 50\le t\le60.
+                        \end{cases}
+                    \]
+                    Die optimalen Punkte bilden die Raumkurve
+                    \(\bigl(t,Q^*(t),\pi_t(Q^*(t))\bigr)\). Zur übersichtlicheren
+                    Darstellung werden die Werte von \(Q\) und \(\pi\) im
+                    dreidimensionalen Koordinatensystem skaliert.
+                </p>
+            </div>
+
+            <p>
+                Die blaue Kurve ist der Schnitt der Fläche mit der Ebene eines
+                fest gewählten Steuerwerts. Der rote Punkt markiert das Maximum
+                dieser Schnittkurve.
+            </p>
+
+            <p><strong>Untersuche:</strong></p>
+            <ol>
+                <li>
+                    Verändere \(t\) in einer der beiden Darstellungen. Welche
+                    Objekte werden gleichzeitig aktualisiert?
+                </li>
+                <li>
+                    Blende die Kurve der optimalen Punkte ein. Was bedeuten die
+                    drei Koordinaten eines Punktes auf dieser Raumkurve?
+                </li>
+                <li>
+                    Projiziere die optimale Kurve auf die \(Q\pi\)-Ebene und
+                    vergleiche sie mit der grünen Kurve im 2D-Applet. Welche
+                    Information über \(t\) geht bei dieser Projektion verloren?
+                </li>
+                <li>
+                    Projiziere die Kurve auf die \(tQ\)- und die \(t\pi\)-Ebene.
+                    Welche Projektion stellt \(Q^*(t)\) dar und welche den
+                    maximalen Gewinn \(\pi_t(Q^*(t))\)?
+                </li>
+                <li>
+                    Erkläre, wie die drei ebenen Darstellungen aus derselben
+                    Raumkurve entstehen und welche Frage sich mit welcher
+                    Projektion am besten beantworten lässt.
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="jxgbox3d"
+         class="jxgbox"
+         aria-label="Dreidimensionale Darstellung der Gewinnfunktion und ihrer optimalen Punkte"></div>
+
+    <script>
+        JXG.Options.text.useMathJax = true;
+
+        const board = JXG.JSXGraph.initBoard('jxgbox', {
+            boundingbox: [-20, 5500, 310, -2000],
+            axis: true,
+            showNavigation: true,
+            showCopyright: false
+        });
+
+        // Label of the horizontal axis
+        board.create('text', [
+            function () {
+                const bb = board.getBoundingBox();
+                return bb[2] - 2;      // x = right boundary, slightly inset
+            },
+            //function () {
+            //    const bb = qBoard.getBoundingBox();
+            //    return bb[3] + 5;      // y = slightly ABOVE the x-axis
+            //},
+            1,
+            '\\(Q\\)'
+        ], {
+            anchorX: 'right',
+            anchorY: 'bottom',
+            fixed: true,
+            fontSize: 16
+        });
+
+        // Parameters for t-range used in the family of curves
+        const T_MIN = 0;
+        const T_MAX = 60;
+        const T_INIT = 10;
+        const N_MIN = 0;
+        const N_MAX = 100;
+        const N_INIT = 0;
+        const unit = 2;
+
+        // Creative Commons signature (watermark)
+        const CCsignature = board.create('text', [
+            function () {
+                const bb = board.getBoundingBox();
+                const xmin = bb[0], xmax = bb[2];
+                return xmin + 0.01 * (xmax - xmin);
+            },
+            function () {
+                const bb = board.getBoundingBox();
+                const ymin = bb[3], ymax = bb[1];
+                return ymin + 0.01 * (ymax - ymin);
+            },
+            '© 2026 Kinga Sipos • CC BY-SA 4.0'
+        ], {
+            fontSize: 10,
+            anchorX: 'left',
+            anchorY: 'bottom',
+            fixed: true,
+            strokeColor: '#666',
+            opacity: 0.6,
+            highlight: false
+        });
+
+        // Slider for the tax t
+        const tSlider = board.create('slider',
+            [[20, 5100], [20 + (T_MAX - T_MIN) * unit, 5100], [T_MIN, T_INIT, T_MAX]],
+            {
+                name: '\\(t\\)',
+                withLabel: false,
+                //snapWidth: 1,
+                //precision: 1,
+                frozen: true
+            }
+        );
+
+        // Dynamic label for current t
+        const tText = board.create('text',
+            [5, 5400,
+                function () {
+                    return '\\(t = ' + tSlider.Value().toFixed(2) +
+                        '\\,\\text{ €/Einheit}\\)';
+                }
+            ],
+            { fixed: true, frozen: true, anchorX: 'left', anchorY: 'top', strokeColor: '#0066cc' }
+        );
+
+
+        // Slider for n (number of t values)
+        const nSlider = board.create('slider',
+            [[20, 4500], [20 + (N_MAX - N_MIN) * unit, 4500], [N_MIN, N_INIT, N_MAX]],
+            {
+                name: '\\(n\\)',
+                withLabel: false,
+                snapWidth: 1,
+                precision: 0,
+                frozen: true
+            }
+        );
+
+        // Dynamic label for current n
+        const nText = board.create('text',
+            [5, 4800,
+                function () {
+                    return '\\(n = ' + nSlider.Value().toFixed(0) +
+                        '\\,\\text{ zusätzliche }t\\text{-Werte}\\)';
+                }
+            ],
+            { fixed: true, frozen: true, anchorX: 'left', anchorY: 'top', strokeColor: '#999999' }
+        );
+
+        // ---------- Checkbox + maximal profit curve ----------
+
+        // Checkbox to toggle the path of maximal profit
+        const maxPathCheckbox = board.create('checkbox',
+            [5, 4200, '\\(\\text{Kurve der optimalen Punkte }(Q^*(t),\\pi_t(Q^*(t)))\\text{ anzeigen}\\)'],
+            {
+                fixed: true,
+                frozen: true,
+                anchorX: 'left',
+                anchorY: 'top',
+                strokeColor: '#228B22'
+            }
+        );
+
+        // NEW: second checkbox to toggle time-plots Q*(t) and π(Q*(t))
+        const timePlotsCheckbox = board.create('checkbox',
+            [5, 3900, '\\(Q^*(t)\\text{ und }\\pi_t(Q^*(t))\\text{ als Funktionen von }t\\text{ anzeigen}\\)'],
+            {
+                fixed: true,
+                frozen: true,
+                anchorX: 'left',
+                anchorY: 'top',
+                strokeColor: '#FF8C00'
+            }
+        );
+
+        // Profit function π(Q) depending on t
+        function profit(Q, t) {
+            return -1 / 600 * Math.pow(Q, 3) + (50 - t) * Q - 1000 / 3;
+        }
+
+        // Maximizing quantity Q* (interior optimum if t < 50, otherwise Q* = 0)
+        function qStar(t) {
+            const diff = 50 - t;
+            if (diff <= 0) {
+                return 0;
+            }
+            return Math.sqrt(200 * diff);
+        }
+
+        // Main graph (for current t from tSlider)
+        const mainProfitGraph = board.create('functiongraph',
+            [function (x) { return profit(x, tSlider.Value()); }, 0, 300],
+            { strokeWidth: 3, strokeColor: '#0066cc' }
+        );
+
+        // Main maximum point (for current t from tSlider)
+        const mainMaxPoint = board.create('point',
+            [
+                function () { return qStar(tSlider.Value()); },
+                function () {
+                    const t = tSlider.Value();
+                    return profit(qStar(t), t);
+                }
+            ],
+            {
+                name: function () {
+                    const t = tSlider.Value();
+                    const q = qStar(t);
+                    const piq = profit(q, t);
+                    return '\\((Q^*, \\pi_t(Q^*)) = (' + q.toFixed(2) +
+                        ', ' + piq.toFixed(2) + ')\\)';
+                },
+                size: 4,
+                face: 'o',
+                strokeColor: 'red',
+                fillColor: 'red',
+                label: {
+                    strokeColor: 'red'
+                }
+            }
+        );
+
+        // Curve (Q*(t), π(Q*(t))) for t in [T_MIN, min(T_MAX, 50)]
+        const tMaxForCurve = Math.min(T_MAX, 50);
+        const maxProfitCurve = board.create('curve', [
+            function (paramT) { return qStar(paramT); },
+            function (paramT) { return profit(qStar(paramT), paramT); },
+            T_MIN,
+            tMaxForCurve
+        ], {
+            strokeColor: '#32CD32',
+            strokeWidth: 3,
+            visible: function () { return maxPathCheckbox.Value(); }
+        });
+
+        // ---------- Family of profit functions for multiple t-values ----------
+
+        let familyGraphs = [];
+        let familyMaxPoints = [];
+
+        function redrawFamily() {
+            // Remove old graphs and points
+            familyGraphs.forEach(obj => board.removeObject(obj));
+            familyMaxPoints.forEach(obj => board.removeObject(obj));
+            familyGraphs = [];
+            familyMaxPoints = [];
+
+            let n = Math.round(nSlider.Value());
+
+            // For n <= 1 we skip (formula would have division by n-1)
+            if (n <= 1) {
+                board.update();
+                return;
+            }
+
+            for (let i = 0; i < n; i++) {
+                const tVal = T_MIN + i * (T_MAX - T_MIN) / (n - 1);
+
+                // Create a thin graph for this tVal
+                const g = board.create('functiongraph', [
+                    (function (tFixed) {
+                        return function (x) {
+                            return profit(x, tFixed);
+                        };
+                    })(tVal),
+                    0, 300
+                ], {
+                    strokeWidth: 1,
+                    strokeColor: '#999',
+                    dash: 1
+                });
+                familyGraphs.push(g);
+
+                // Create point for maximum of this curve
+                const q = qStar(tVal);
+                const p = profit(q, tVal);
+                const pt = board.create('point', [q, p], {
+                    size: 2,
+                    strokeColor: '#999',
+                    fillColor: '#999',
+                    name: '',
+                    fixed: true
+                });
+                familyMaxPoints.push(pt);
+            }
+
+            board.update();
+        }
+
+        // Redraw family whenever n changes
+        nSlider.on('drag', redrawFamily);
+        nSlider.on('up', redrawFamily);
+
+        // Initial draw (n = 0 -> nothing)
+        redrawFamily();
+
+        // ---------- Extra boards for Q*(t) and π(Q*(t)) ----------
+
+        let qBoard = null;
+        let piBoard = null;
+        let qCurve = null;
+        let qPoint = null;
+        let piCurve = null;
+        let piPoint = null;
+
+        function initTimeBoards() {
+            if (qBoard && piBoard) return; // already created
+
+            // Left board: Q*(t) vs t
+            qBoard = JXG.JSXGraph.initBoard('jxgbox_q', {
+                boundingbox: [-5, 120, 65, -10], // t on x-axis, Q* on y-axis
+                axis: true,
+                showNavigation: false,
+                showCopyright: false
+            });
+
+            // Right board: π(Q*(t)) vs t
+            piBoard = JXG.JSXGraph.initBoard('jxgbox_pi', {
+                boundingbox: [-5, 3200, 65, -500], // t on x-axis, π on y-axis
+                axis: true,
+                showNavigation: false,
+                showCopyright: false
+            });
+
+            // Label of the horizontal axis 
+            qBoard.create('text', [
+                function () {
+                    const bb = qBoard.getBoundingBox();
+                    return bb[2] - 2;      // x = right boundary, slightly inset
+                },
+                //function () {
+                //    const bb = qBoard.getBoundingBox();
+                //    return bb[3] + 5;      // y = slightly ABOVE the x-axis
+                //},
+                1,
+                '\\(t\\)'
+            ], {
+                anchorX: 'right',
+                anchorY: 'bottom',
+                fixed: true,
+                fontSize: 16
+            });
+
+            // Label of the horizontal axis
+            piBoard.create('text', [
+                function () {
+                    const bb = piBoard.getBoundingBox();
+                    return bb[2] - 2;      // x = right boundary, slightly inset
+                },
+                //function () {
+                //    const bb = qBoard.getBoundingBox();
+                //    return bb[3] + 5;      // y = slightly ABOVE the x-axis
+                //},
+                1,
+                '\\(t\\)'
+            ], {
+                anchorX: 'right',
+                anchorY: 'bottom',
+                fixed: true,
+                fontSize: 16
+            });
+
+            // Q*(t) curve 
+            qCurve = qBoard.create('functiongraph', [
+                function (tt) { return qStar(tt); },
+                T_MIN,
+                tMaxForCurve
+            ], {
+                strokeWidth: 2,
+                strokeColor: '#FF8C00',
+                name: '\\(Q^*(t)\\)',
+                withLabel: true,
+                label: {
+                    anchorX: 'left',
+                    anchorY: 'top',
+                    offset: [10, 10],
+                    strokeColor: '#FF8C00'
+                }
+            });
+
+            // Point on Q*(t) curve following tSlider
+            qPoint = qBoard.create('point', [
+                function () { return tSlider.Value(); },
+                function () { return qStar(tSlider.Value()); }
+            ], {
+                size: 3,
+                strokeColor: 'red',
+                fillColor: 'red',
+                name: function () {
+                    const t = tSlider.Value();
+                    const q = qStar(t);
+                    //const piq = profit(q, t);
+                    return '\\((t,Q^*(t)) = (' + t.toFixed(0) + ',' + q.toFixed(2) + ')\\)';
+                },
+                size: 4,
+                face: 'o',
+                strokeColor: 'red',
+                fillColor: 'red',
+                label: {
+                    strokeColor: 'red'
+                }
+            });
+
+            // π(Q*(t)) curve 
+            piCurve = piBoard.create('functiongraph', [
+                function (tt) { return profit(qStar(tt), tt); },
+                T_MIN,
+                tMaxForCurve
+            ], {
+                strokeWidth: 2,
+                strokeColor: '#FF8C00',
+                name: '\\(\\pi_t(Q^*(t))\\)',
+                withLabel: true,
+                label: {
+                    anchorX: 'left',
+                    anchorY: 'top',
+                    offset: [10, 10],
+                    strokeColor: '#FF8C00'
+                }
+            });
+
+            // Point on π(Q*(t)) curve following tSlider
+            piPoint = piBoard.create('point', [
+                function () { return tSlider.Value(); },
+                function () {
+                    const t = tSlider.Value();
+                    return profit(qStar(t), t);
+                }
+            ], {
+                size: 3,
+                strokeColor: 'red',
+                fillColor: 'red',
+                name: function () {
+                    const t = tSlider.Value();
+                    const q = qStar(t);
+                    const piq = profit(q, t);
+                    return '\\((t,\\pi_t(Q^*(t))) = (' + t.toFixed(0) + ',' + piq.toFixed(2) + ')\\)';
+                },
+                size: 4,
+                face: 'o',
+                strokeColor: 'red',
+                fillColor: 'red',
+                label: {
+                    strokeColor: 'red'
+                }
+            });
+        }
+
+        function showTimeBoards() {
+            const container = document.getElementById('jxgbox_qpi');
+            container.style.display = 'block';
+            initTimeBoards();
+            qBoard.update();
+            piBoard.update();
+        }
+
+        function hideTimeBoards() {
+            const container = document.getElementById('jxgbox_qpi');
+            container.style.display = 'none';
+            if (qBoard && piBoard) {
+                qBoard.update();
+                piBoard.update();
+            }
+        }
+
+        // Toggle extra boards via checkbox
+        timePlotsCheckbox.on('up', function () {
+            if (!timePlotsCheckbox.Value()) {
+                showTimeBoards();
+            } else {
+                hideTimeBoards();
+            }
+        });
+
+        // Ensure extra boards update when t changes
+        tSlider.on('drag', function () {
+            if (qBoard && piBoard) {
+                qBoard.update();
+                piBoard.update();
+            }
+        });
+        tSlider.on('up', function () {
+            if (qBoard && piBoard) {
+                qBoard.update();
+                piBoard.update();
+            }
+        });
+
+        // Expose the complete 2D applet to the slider synchronisation layer.
+        window.profit2DApplet = {
+            board: board,
+            tSlider: tSlider,
+            update: function () {
+                board.update();
+                if (qBoard && piBoard) {
+                    qBoard.update();
+                    piBoard.update();
+                }
+            }
+        };
+
+    </script>
+
+    <script>
+        (function () {
+            const colors = [
+                JXG.palette.blue,
+                JXG.palette.red,
+                JXG.palette.green,
+                JXG.palette.black,
+                JXG.palette.purple,
+                JXG.palette.yellow,
+                JXG.palette.skyblue
+            ];
+
+            const board3d = JXG.JSXGraph.initBoard('jxgbox3d', {
+                boundingbox: [-8, 8, 8, -8],
+                keepaspectratio: false,
+                showCopyright: false
+            });
+
+            // Creative Commons signature (watermark)
+            board3d.create('text', [
+                function () {
+                    const bb = board3d.getBoundingBox();
+                    return bb[0] + 0.01 * (bb[2] - bb[0]);
+                },
+                function () {
+                    const bb = board3d.getBoundingBox();
+                    return bb[3] + 0.01 * (bb[1] - bb[3]);
+                },
+                '© 2026 Kinga Sipos • CC BY-SA 4.0'
+            ], {
+                fontSize: 10,
+                anchorX: 'left',
+                anchorY: 'bottom',
+                fixed: true,
+                strokeColor: '#666',
+                opacity: 0.6,
+                highlight: false
+            });
+
+            // The 3D range is extended to t=60 so that both sliders share
+            // the complete range of the 2D applet.
+            const tRange3d = [0, 60];
+            const qRange3d = [0, 30];       // displayed as Q / 10
+            const piRange3d = [-5, 40];     // displayed as pi / 100
+
+            const view3d = board3d.create('view3d', [
+                [-2, -4],
+                [8, 8],
+                [tRange3d, qRange3d, piRange3d]
+            ], {
+                xAxis: { visible: true, name: '$t$', strokeColor: 'black'},
+                yAxis: { visible: true, name: '$Q$', strokeColor: 'black'},
+                zAxis: { visible: true, name: '$\\pi$', strokeColor: 'black'},
+                xPlaneRear: { visible: true },
+                yPlaneRear: { visible: true },
+                zPlaneRear: {
+                    visible: true,
+                    fillOpacity: 0.1
+                },
+                projection: 'central',
+                trackball: { enabled: false },
+                depthOrder: { enabled: true }
+            });
+
+            function profit3d(t, Q) {
+                return -1 / 600 * Math.pow(Q, 3) + (50 - t) * Q - 1000 / 3;
+            }
+
+            view3d.create('functiongraph3d', [
+                function (t, Q) {
+                    return 1 / 100 * profit3d(t, Q * 10);
+                },
+                tRange3d,
+                qRange3d
+            ], {
+                strokeColor: colors[0],
+                strokeWidth: 0.5,
+                stepsU: 50,
+                stepsV: 100
+            });
+
+            const tSlider3d = board3d.create('slider', [
+                [-7, 7.5],
+                [5, 7.5],
+                [0, 10, 60]
+            ], {
+                name: '\\(t\\)',
+                frozen: true
+            });
+
+            view3d.create('curve3d', [
+                function () { return tSlider3d.Value(); },
+                function (Q) { return Q; },
+                function (Q) {
+                    return 1 / 100 * profit3d(tSlider3d.Value(), 10 * Q);
+                },
+                [0, 100]
+            ], {
+                strokeWidth: 3,
+                strokeColor: '#0066cc'
+            });
+
+            function qStar3d(t) {
+                const diff = 50 - t;
+                return diff <= 0 ? 0 : Math.sqrt(200 * diff);
+            }
+
+            view3d.create('point3d', [
+                function () { return tSlider3d.Value(); },
+                function () { return 1 / 10 * qStar3d(tSlider3d.Value()); },
+                function () {
+                    const t = tSlider3d.Value();
+                    return 1 / 100 * profit3d(t, qStar3d(t));
+                }
+            ], {
+                size: 5,
+                strokeColor: 'red',
+                fillColor: 'red',
+                name: '',
+                withLabel: false
+            });
+
+            const optCurveCheckbox3d = board3d.create('checkbox', [
+                -7,
+                7,
+                '\\(\\text{Kurve der optimalen Punkte }(t,Q^*(t),\\pi_t(Q^*(t)))\\text{ anzeigen}\\)'
+            ], {
+                anchorX: 'left',
+                anchorY: 'top',
+                frozen: true,
+                fixed: true,
+                strokeColor: '#FF1493'
+            });
+
+            view3d.create('curve3d', [
+                function (t) { return t; },
+                function (t) { return 1 / 10 * qStar3d(t); },
+                function (t) { return 1 / 100 * profit3d(t, qStar3d(t)); },
+                tRange3d
+            ], {
+                strokeWidth: 3,
+                strokeColor: '#FF1493',
+                visible: function () { return optCurveCheckbox3d.Value(); }
+            });
+
+            const projCheckboxQPi = board3d.create('checkbox', [
+                -6.3,
+                6.3,
+                '\\(\\text{Projektion auf die }Q\\pi\\text{-Ebene anzeigen}\\)'
+            ], {
+                anchorX: 'left',
+                anchorY: 'top',
+                frozen: true,
+                fixed: true,
+                strokeColor: '#32CD32',
+                visible: function () { return optCurveCheckbox3d.Value(); }
+            });
+
+            view3d.create('curve3d', [
+                function () { return 0; },
+                function (t) { return 1 / 10 * qStar3d(t); },
+                function (t) { return 1 / 100 * profit3d(t, qStar3d(t)); },
+                tRange3d
+            ], {
+                strokeWidth: 2,
+                strokeColor: '#32CD32',
+                visible: function () {
+                    return projCheckboxQPi.Value() && optCurveCheckbox3d.Value();
+                }
+            });
+
+            view3d.create('point3d', [
+                function () { return 0; },
+                function () { return 1 / 10 * qStar3d(tSlider3d.Value()); },
+                function () {
+                    const t = tSlider3d.Value();
+                    return 1 / 100 * profit3d(t, qStar3d(t));
+                }
+            ], {
+                size: 3,
+                strokeColor: 'red',
+                fillColor: 'red',
+                name: '',
+                withLabel: false,
+                visible: function () {
+                    return projCheckboxQPi.Value() && optCurveCheckbox3d.Value();
+                }
+            });
+
+            const projCheckboxTQ = board3d.create('checkbox', [
+                -6.3,
+                5.7,
+                '\\(\\text{Projektion auf die }tQ\\text{-Ebene anzeigen}\\)'
+            ], {
+                anchorX: 'left',
+                anchorY: 'top',
+                frozen: true,
+                fixed: true,
+                strokeColor: '#FF8C00',
+                visible: function () { return optCurveCheckbox3d.Value(); }
+            });
+
+            view3d.create('curve3d', [
+                function (t) { return t; },
+                function (t) { return 1 / 10 * qStar3d(t); },
+                function () { return 0; },
+                tRange3d
+            ], {
+                strokeWidth: 2,
+                strokeColor: '#FF8C00',
+                name: '\\(Q^*(t)\\)',
+                visible: function () {
+                    return projCheckboxTQ.Value() && optCurveCheckbox3d.Value();
+                }
+            });
+
+            view3d.create('point3d', [
+                function () { return tSlider3d.Value(); },
+                function () { return 1 / 10 * qStar3d(tSlider3d.Value()); },
+                function () { return 0; }
+            ], {
+                size: 3,
+                strokeColor: 'red',
+                fillColor: 'red',
+                name: '',
+                withLabel: false,
+                visible: function () {
+                    return projCheckboxTQ.Value() && optCurveCheckbox3d.Value();
+                }
+            });
+
+            const projCheckboxTPi = board3d.create('checkbox', [
+                -6.3,
+                5.1,
+                '\\(\\text{Projektion auf die }t\\pi\\text{-Ebene anzeigen}\\)'
+            ], {
+                anchorX: 'left',
+                anchorY: 'top',
+                frozen: true,
+                fixed: true,
+                strokeColor: '#7b3294',
+                visible: function () { return optCurveCheckbox3d.Value(); }
+            });
+
+            view3d.create('curve3d', [
+                function (t) { return t; },
+                function () { return 0; },
+                function (t) { return 1 / 100 * profit3d(t, qStar3d(t)); },
+                tRange3d
+            ], {
+                strokeWidth: 2,
+                strokeColor: '#7b3294',
+                visible: function () {
+                    return projCheckboxTPi.Value() && optCurveCheckbox3d.Value();
+                }
+            });
+
+            view3d.create('point3d', [
+                function () { return tSlider3d.Value(); },
+                function () { return 0; },
+                function () {
+                    const t = tSlider3d.Value();
+                    return 1 / 100 * profit3d(t, qStar3d(t));
+                }
+            ], {
+                size: 3,
+                strokeColor: 'red',
+                fillColor: 'red',
+                name: '',
+                withLabel: false,
+                visible: function () {
+                    return projCheckboxTPi.Value() && optCurveCheckbox3d.Value();
+                }
+            });
+
+            window.profit3DApplet = {
+                board: board3d,
+                tSlider: tSlider3d,
+                update: function () {
+                    board3d.update();
+                }
+            };
+        }());
+    </script>
+
+    <script>
+        (function () {
+            const applet2d = window.profit2DApplet;
+            const applet3d = window.profit3DApplet;
+            let synchronising = false;
+
+            function synchroniseTax(source, target) {
+                if (synchronising) return;
+
+                synchronising = true;
+                try {
+                    target.tSlider.setValue(source.tSlider.Value());
+                    source.update();
+                    target.update();
+                } finally {
+                    synchronising = false;
+                }
+            }
+
+            function from2d() {
+                synchroniseTax(applet2d, applet3d);
+            }
+
+            function from3d() {
+                synchroniseTax(applet3d, applet2d);
+            }
+
+            applet2d.tSlider.on('drag', from2d);
+            applet2d.tSlider.on('up', from2d);
+            applet3d.tSlider.on('drag', from3d);
+            applet3d.tSlider.on('up', from3d);
+
+            // Ensure both applets start with exactly the same value.
+            from2d();
+        }());
+    </script>
+
+</body>
+
+</html>

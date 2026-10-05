@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>First 3D</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gewinnmaximierung in drei Dimensionen – JSXGraph</title>
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
     <link href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js" type="text/javascript"
@@ -14,13 +15,163 @@
         window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            color: #222;
+        }
+
+        #intro,
+        #jxgbox3d {
+            width: min(900px, calc(100vw - 32px));
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        #intro {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #intro h2 {
+            margin: 0 0 8px;
+        }
+
+        #explanation {
+            padding: 12px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        #explanation > p:first-child {
+            margin-top: 0;
+        }
+
+        #explanation ol {
+            margin-bottom: 0;
+            padding-left: 24px;
+        }
+
+        #explanation li + li {
+            margin-top: 5px;
+        }
+
+        .model-box {
+            margin: 14px 0;
+            padding: 10px 12px;
+            border-left: 4px solid #2166ac;
+            background: #eef5fb;
+        }
+
+        .model-box p {
+            margin: 0 0 8px;
+        }
+
+        .model-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        #jxgbox3d {
+            height: min(620px, 72vw);
+            min-height: 500px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+
+        .JXGtext,
+        .JXGinput,
+        .JXGbutton {
+            font-family: sans-serif !important;
+        }
+
+        @media (max-width: 650px) {
+            #jxgbox3d {
+                height: 560px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-    <h2 style="text-align:center;">$2D$-Fläche der Gewinnfunktion $\pi(t,Q)$</h2>
+    <div id="intro">
+        <h2>Die Gewinnfunktion als Fläche im \((t,Q,\pi)\)-Raum</h2>
 
-    <div id="jxgbox3d" class="jxgbox" style="width:70vw; height:500px;"></div>
+        <div id="explanation">
+            <p>
+                In der zweidimensionalen Darstellung wird für jeden festen
+                Steuerwert \(t\) eine eigene Gewinnfunktion in Abhängigkeit von
+                \(Q\) gezeichnet. Hier werden alle diese Graphen zu einer Fläche
+                im dreidimensionalen Raum zusammengefügt.
+            </p>
+
+            <div class="model-box">
+                <p><strong>Modell und optimale Punkte</strong></p>
+                <p>
+                    \[
+                        \pi_t(Q)=-\frac{1}{600}Q^3+(50-t)Q-\frac{1000}{3},
+                        \qquad Q\in[0,300].
+                    \]
+                </p>
+                <p>
+                    Für \(0\le t\le 50\) ist
+                    \(Q^*(t)=\sqrt{200(50-t)}\). Die optimalen Punkte bilden
+                    deshalb die Raumkurve
+                    \[
+                        \bigl(t,Q^*(t),\pi_t(Q^*(t))\bigr).
+                    \]
+                    Zur übersichtlicheren Darstellung werden die Werte von
+                    \(Q\) und \(\pi\) im Koordinatensystem skaliert.
+                </p>
+            </div>
+
+            <p>
+                Die blaue Kurve ist der Schnitt der Fläche mit der Ebene eines
+                fest gewählten Steuerwerts. Der rote Punkt markiert das Maximum
+                dieser Schnittkurve.
+            </p>
+
+            <p><strong>Untersuche:</strong></p>
+            <ol>
+                <li>
+                    Verändere \(t\). Welche Koordinate bleibt auf der blauen
+                    Schnittkurve fest und welche Grösse wird entlang der Kurve
+                    variiert?
+                </li>
+                <li>
+                    Beobachte den roten Maximalpunkt und blende anschliessend die
+                    Kurve der optimalen Punkte ein. Was bedeuten die drei
+                    Koordinaten eines Punktes auf dieser Kurve?
+                </li>
+                <li>
+                    Projiziere die optimale Kurve auf die \(Q\pi\)-Ebene. Welche
+                    Information geht dabei verloren? Vergleiche die Projektion
+                    mit der Kurve der optimalen Punkte im zweidimensionalen Applet.
+                </li>
+                <li>
+                    Projiziere die Kurve auf die \(tQ\)- und die \(t\pi\)-Ebene.
+                    Welche der beiden Projektionen stellt \(Q^*(t)\) dar und
+                    welche den maximalen Gewinn \(\pi_t(Q^*(t))\)?
+                </li>
+                <li>
+                    Erkläre, wie die drei ebenen Darstellungen aus derselben
+                    Raumkurve entstehen und welche Frage sich mit welcher
+                    Projektion am besten beantworten lässt.
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="jxgbox3d"
+         class="jxgbox"
+         aria-label="Dreidimensionale Darstellung der Gewinnfunktion und ihrer optimalen Punkte"></div>
 
     <script>
 
@@ -60,8 +211,12 @@
                 label: {
                     text: '\\(\\pi\\)',
                     strokeColor: 'black',
-                    offset: [0, 20]
+                    offset: [0, 20],
+                    label: {
+                    parse: false,
+                    useMathJax: true
                 }
+            }
             }
         });
 
@@ -77,7 +232,7 @@
                 const ymin = bb[3], ymax = bb[1];
                 return ymin + 0.01 * (ymax - ymin);
             },
-            '© 2025 Kinga Sipos • CC BY-SA 4.0'
+            '© 2026 Kinga Sipos • CC BY-SA 4.0'
         ], {
             fontSize: 10,
             anchorX: 'left',
@@ -99,9 +254,9 @@
             [8, 8],                   // width/height of the 3D view in board coords
             [tRange, qRange, piRange] // world box: [x-range, y-range, z-range]
         ], {
-            xAxis: { visible: true, name: '$t$' },
-            yAxis: { visible: true, name: '$Q$' },
-            zAxis: { visible: true, name: '$pi$' },
+            xAxis: { visible: true, name: '$t$', strokeColor: 'black'},
+            yAxis: { visible: true, name: '$Q$', strokeColor: 'black'},
+            zAxis: { visible: true, name: '$\\pi$', strokeColor: 'black'},
             xPlaneRear: { visible: true },
             yPlaneRear: { visible: true },
             zPlaneRear: {
@@ -149,7 +304,7 @@
                  stepsV: 50
              }); */
 
-        var tSlider = board.create('slider', [[-7, 7.5], [5, 7.5], [0, 10, 50]], { name: 't', frozen: true });
+        var tSlider = board.create('slider', [[-7, 7.5], [5, 7.5], [0, 10, 50]], { name: '\\(t\\)', frozen: true });
 
         var sliceCurve = view.create('curve3d', [
             () => tSlider.Value(),         // t = 10 fixed
@@ -183,7 +338,7 @@
 
         // Checkbox for the optimal curve
         var optCurveCheckbox = board.create('checkbox',
-            [-7, 7, '\\(\\text{Optimale Kurve }(t,Q^*(t),\\pi(Q^*(t)))\\text{ anzeigen}\\)'],
+            [-7, 7, '\\(\\text{Kurve der optimalen Punkte }(t,Q^*(t),\\pi_t(Q^*(t)))\\text{ anzeigen}\\)'],
             {
                 anchorX: 'left',
                 anchorY: 'top',
@@ -207,7 +362,7 @@
 
         // Checkbox for showing the third projection of the curve with optimal coordinates
         var projCheckbox1 = board.create('checkbox',
-            [-6.3, 6.3, '\\(\\text{Projektion auf die $Q\\pi$-Ebene (der Graph der Kurve $t \\to (0, Q^*(t), \\pi(Q^*(t)))$)}\\)'],
+            [-6.3, 6.3, '\\(\\text{Projektion auf die }Q\\pi\\text{-Ebene anzeigen}\\)'],
             {
                 anchorX: 'left',
                 anchorY: 'top',
@@ -246,7 +401,7 @@
 
         // Checkbox for showing the first projection of the curve with optimal coordinates
         var projCheckbox2 = board.create('checkbox',
-            [-6.3, 5.7, '\\(\\text{Projektion auf die $tQ$-Ebene (der Graph der Kurve $t \\to (t, Q^*(t),0)$)}\\)'],
+            [-6.3, 5.7, '\\(\\text{Projektion auf die }tQ\\text{-Ebene anzeigen}\\)'],
             {
                 anchorX: 'left',
                 anchorY: 'top',
@@ -286,13 +441,13 @@
 
         // Checkbox for showing the second projection of the curve with optimal coordinates
         var projCheckbox3 = board.create('checkbox',
-            [-6.3, 5.1, '\\(\\text{Projektion auf die $t\\pi$-Ebene (der Graph der Kurve $t \\to (t, 0, \\pi(Q^*(t)))$)}\\)'],
+            [-6.3, 5.1, '\\(\\text{Projektion auf die }t\\pi\\text{-Ebene anzeigen}\\)'],
             {
                 anchorX: 'left',
                 anchorY: 'top',
                 frozen: true,
                 fixed: true,
-                strokeColor: '#FF8C00',
+                strokeColor: '#7b3294',
                 visible: () => optCurveCheckbox.Value()
             }
         );
@@ -305,7 +460,7 @@
             tRange
         ], {
             strokeWidth: 2,
-            strokeColor: '#FF8C00',
+            strokeColor: '#7b3294',
             visible: () => projCheckbox3.Value() && optCurveCheckbox.Value()
         });
 
