@@ -86,6 +86,22 @@ body {
     margin-top: 5px;
 }
 
+.theorem-claim {
+    margin: 12px 0;
+    padding: 10px 12px;
+    border-left: 4px solid #0066cc;
+    border-radius: 4px;
+    background: #eef5ff;
+}
+
+.theorem-claim p {
+    margin: 0;
+}
+
+.theorem-claim p + p {
+    margin-top: 6px;
+}
+
 #jxgbox {
     height: min(550px, 67vw);
     min-height: 430px;
@@ -129,38 +145,73 @@ body {
             assumptions is not satisfied.
         </p>
 
+        <div class="theorem-claim">
+            <p>
+                <strong>Claim to investigate — Extreme Value Theorem:</strong>
+                If \(f\) is continuous on a closed and bounded interval
+                \([a,b]\), then \(f\) attains both a global minimum and a global
+                maximum on \([a,b]\).
+            </p>
+            <p>
+                Use the examples below to investigate the role of each
+                assumption and whether the assumptions are necessary or merely
+                sufficient.
+            </p>
+        </div>
+
         <p>
-            Select a function, move the interval endpoints \(a\) and \(b\)
-            directly along the \(x\)-axis, and switch between the closed
-            interval \([a,b]\) and the open interval \((a,b)\).
+            Select a function and move the finite boundaries \(a\) and \(b\)
+            directly along the \(x\)-axis. You can include or exclude each
+            finite boundary independently and make the domain unbounded to the
+            left or to the right.
         </p>
 
         <p><strong>Explore:</strong></p>
 
         <ol>
             <li>
-                Where are the global minimum and global maximum of
-                \(f(x)=x\) on \([a,b]\)?
+                Select \(f(x)=x\), keep both \(a\) and \(b\) finite, and include
+                both boundaries. Where does \(f\) attain its global minimum and
+                global maximum? What happens when you move \(a\) or \(b\)?
             </li>
             <li>
-                What changes for \(f(x)=x\) when the interval is open?
+                For \(f(x)=x\), exclude first \(a\), then \(b\), and finally both
+                boundaries. Which global extrema cease to exist? Why do the
+                limiting values at excluded boundaries not count as extrema?
+            </li>
+            <li>
+                Select \(b=+\infty\) while keeping \(a\) included. Is
+                \([a,\infty)\) closed? Is it bounded? Which global extrema does
+                \(f(x)=x\) have? Repeat for \((-\infty,b]\) and \(\mathbb{R}\).
             </li>
             <li>
                 Can the global extrema of
-                \(f(x)=\frac{(x-1)(x+2)(x-2)}{8}\) lie in the interior of the interval?
+                \(f(x)=\frac{(x-1)(x+2)(x-2)}{8}\) lie in the interior of a
+                closed and bounded interval? Experiment with different values
+                of \(a\) and \(b\).
             </li>
             <li>
-                Find an open interval on which \(f(x)=|x-1|\) nevertheless has
-                a global minimum. Does this contradict the Extreme Value Theorem?
+                Select \(f(x)=|x-1|\) and a domain containing \(x=1\). The
+                function is continuous but not differentiable at \(x=1\). Does
+                it nevertheless attain a global minimum there? Which property
+                is required by the Extreme Value Theorem?
             </li>
             <li>
-                Select the step function and the closed interval \([-1,1]\).
-                Why does the function have no global maximum there, even though
-                the interval is closed and bounded?
+                Find an open interval containing \(x=1\) on which
+                \(f(x)=|x-1|\) has a global minimum. Then consider the function
+                on \(\mathbb{R}\). Which global extrema exist? Does failure of
+                the theorem's assumptions imply that extrema cannot exist?
             </li>
             <li>
-                State the Extreme Value Theorem in your own words and identify
-                its essential assumptions.
+                Select the step function on \([-1,1]\), including both
+                boundaries. Why is there no global maximum although the domain
+                is closed and bounded? Which hypothesis is not satisfied?
+            </li>
+            <li>
+                Summarise the roles of continuity, closedness, and boundedness.
+                Do your experiments show that these assumptions are necessary
+                for global extrema to exist, or that together they provide a
+                sufficient guarantee?
             </li>
         </ol>
     </div>
@@ -505,23 +556,75 @@ const buttonJump = board.create('button', [
 
 
 /* =========================================================
-   JSXGraph-Checkbox
+   Domain controls
    ========================================================= */
 
-const closedCheckbox = board.create('checkbox', [
-
-    -5.75,
-    3.65,
-
-    'closed interval [a,b]'
-
+const leftInfiniteCheckbox = board.create('checkbox', [
+    -5.75, 3.65, '$a=-\\infty$'
 ], {
-
-    checked: true,
-
+    checked: false,
     fixed: true
-
 });
+
+const rightInfiniteCheckbox = board.create('checkbox', [
+    -3.55, 3.65, '$b=+\\infty$'
+], {
+    checked: false,
+    fixed: true
+});
+
+const includeACheckbox = board.create('checkbox', [
+    -5.75, 3.15, 'include $a$'
+], {
+    checked: false,
+    fixed: true
+});
+
+const includeBCheckbox = board.create('checkbox', [
+    -3.55, 3.15, 'include $b$'
+], {
+    checked: false,
+    fixed: true
+});
+
+
+const leftInclusionState = {
+    savedValue: includeACheckbox.Value(),
+    wasInfinite: false
+};
+
+const rightInclusionState = {
+    savedValue: includeBCheckbox.Value(),
+    wasInfinite: false
+};
+
+
+function setCheckboxActive(checkbox, active) {
+
+    checkbox.rendNodeCheckbox.disabled = !active;
+
+    if (checkbox.rendNode) {
+        checkbox.rendNode.style.opacity = active ? '1' : '0.35';
+    }
+
+}
+
+
+function synchroniseInclusionCheckbox(infinite, checkbox, state) {
+
+    if (infinite && !state.wasInfinite) {
+        state.savedValue = checkbox.Value();
+        checkbox.rendNodeCheckbox.checked = false;
+    }
+
+    if (!infinite && state.wasInfinite) {
+        checkbox.rendNodeCheckbox.checked = state.savedValue;
+    }
+
+    state.wasInfinite = infinite;
+    setCheckboxActive(checkbox, !infinite);
+
+}
 
 
 
@@ -627,29 +730,95 @@ function removeIfExists(obj) {
    Stetigkeit auf dem aktuell betrachteten Intervall
    ========================================================= */
 
-function isContinuousOnInterval(a, b, closed) {
+function domainContains(domain, x) {
 
-    if (currentFuncId !== 'jump') {
+    const eps = 1e-9;
 
-        return true;
-
+    if (!domain.leftInfinite) {
+        if (x < domain.a - eps) return false;
+        if (!domain.includeA && Math.abs(x - domain.a) <= eps) return false;
     }
 
+    if (!domain.rightInfinite) {
+        if (x > domain.b + eps) return false;
+        if (!domain.includeB && Math.abs(x - domain.b) <= eps) return false;
+    }
+
+    return true;
+
+}
+
+
+function domainIsClosed(domain) {
+
+    return (domain.leftInfinite || domain.includeA) &&
+           (domain.rightInfinite || domain.includeB);
+
+}
+
+
+function domainIsBounded(domain) {
+
+    return !domain.leftInfinite && !domain.rightInfinite;
+
+}
+
+
+function formatDomain(domain) {
+
+    if (domain.leftInfinite && domain.rightInfinite) {
+        return '$\\mathbb{R}$';
+    }
+
+    const leftBracket = domain.leftInfinite
+        ? '('
+        : (domain.includeA ? '[' : '(');
+
+    const rightBracket = domain.rightInfinite
+        ? ')'
+        : (domain.includeB ? ']' : ')');
+
+    const leftValue = domain.leftInfinite
+        ? '-\\infty'
+        : domain.a.toFixed(2);
+
+    const rightValue = domain.rightInfinite
+        ? '+\\infty'
+        : domain.b.toFixed(2);
+
+    return `$${leftBracket}${leftValue}, ${rightValue}${rightBracket}$`;
+
+}
+
+
+function hasNegativePoints(domain) {
+
+    const lower = domain.leftInfinite ? -Infinity : domain.a;
+    const upper = domain.rightInfinite ? Infinity : domain.b;
+
+    return lower < Math.min(upper, 0);
+
+}
+
+
+function hasNonnegativePoints(domain) {
+
+    if (domain.rightInfinite || domain.b > 0) return true;
+    return Math.abs(domain.b) < 1e-9 && domain.includeB;
+
+}
+
+
+function isContinuousOnDomain(domain) {
+
+    if (currentFuncId !== 'jump') return true;
 
     /*
-     Die Sprungstelle liegt bei x=0. Auf einem Intervall, das
-     nur auf einer Seite der Sprungstelle liegt, ist die
-     eingeschränkte Funktion stetig.
+     The only discontinuity of the step function is at x=0.
+     For the restriction to the selected domain it matters only
+     when 0 belongs to the domain and can be approached from the left.
     */
-
-    if (closed) {
-
-        return !(a < 0 && b >= 0);
-
-    }
-
-
-    return !(a < 0 && b > 0);
+    return !(domainContains(domain, 0) && hasNegativePoints(domain));
 
 }
 
@@ -661,95 +830,101 @@ function isContinuousOnInterval(a, b, closed) {
    f(x)=x für x<0 und f(x)=-1 für x>=0
    ========================================================= */
 
-function determineJumpExtrema(a, b, closed) {
+function representativeNonnegativePoint(domain, fraction) {
 
-    /* -----------------------------------------------------
-       Abgeschlossenes Intervall
-       ----------------------------------------------------- */
+    let lower = domain.leftInfinite ? 0 : Math.max(domain.a, 0);
+    let upper = domain.rightInfinite ? lower + 0.3 : domain.b;
+    let x = lower + fraction * (upper - lower);
 
-    if (closed) {
+    if (domainContains(domain, x)) return x;
+    if (domainContains(domain, 0)) return 0;
+    if (!domain.leftInfinite && domain.includeA && domain.a >= 0) return domain.a;
+    if (!domain.rightInfinite && domain.includeB && domain.b >= 0) return domain.b;
 
-        // Das ganze Intervall liegt links von der Sprungstelle.
-        if (b < 0) {
+    return lower + 0.05;
 
-            return {
-                min: { x: a, y: a },
-                max: { x: b, y: b }
-            };
-
-        }
+}
 
 
-        // Das ganze Intervall liegt rechts von der Sprungstelle.
-        if (a >= 0) {
+function sameValue(x, y) {
 
-            return {
-                min: { x: a, y: -1 },
-                max: { x: b, y: -1 }
-            };
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return x === y;
+    return Math.abs(x - y) < 1e-9;
 
-        }
+}
 
 
-        /*
-         Das Intervall enthält Werte links von 0 und den Punkt 0.
-         Der Wert 0 ist das Supremum, wird aber nicht angenommen.
-        */
+function attainedPoint(options, target) {
 
-        return {
-            min: a < -1
-                ? { x: a, y: a }
-                : { x: 0, y: -1 },
-            max: null
-        };
+    const option = options.find(function (entry) {
+        return entry.attained && sameValue(entry.value, target);
+    });
+
+    return option ? option.point : null;
+
+}
+
+
+function determineJumpExtrema(domain) {
+
+    const infimumOptions = [];
+    const supremumOptions = [];
+
+    if (hasNegativePoints(domain)) {
+
+        infimumOptions.push({
+            value: domain.leftInfinite ? -Infinity : domain.a,
+            attained: !domain.leftInfinite && domain.includeA,
+            point: !domain.leftInfinite && domain.includeA
+                ? { x: domain.a, y: domain.a }
+                : null
+        });
+
+        const approachesZero = domain.rightInfinite || domain.b >= 0;
+
+        supremumOptions.push({
+            value: approachesZero ? 0 : domain.b,
+            attained: !approachesZero && domain.includeB,
+            point: !approachesZero && domain.includeB
+                ? { x: domain.b, y: domain.b }
+                : null
+        });
 
     }
 
+    if (hasNonnegativePoints(domain)) {
 
-    /* -----------------------------------------------------
-       Offenes Intervall
-       ----------------------------------------------------- */
-
-    // Links von 0 gilt f(x)=x; beide Randwerte fehlen.
-    if (b <= 0) {
-
-        return {
-            min: null,
-            max: null
-        };
-
-    }
-
-
-    // Rechts von 0 ist die Funktion konstant gleich -1.
-    if (a >= 0) {
-
-        return {
-            min: {
-                x: a + (b - a) / 3,
-                y: -1
-            },
-            max: {
-                x: a + 2 * (b - a) / 3,
+        infimumOptions.push({
+            value: -1,
+            attained: true,
+            point: {
+                x: representativeNonnegativePoint(domain, 0.35),
                 y: -1
             }
-        };
+        });
+
+        supremumOptions.push({
+            value: -1,
+            attained: true,
+            point: {
+                x: representativeNonnegativePoint(domain, 0.7),
+                y: -1
+            }
+        });
 
     }
 
+    const infimum = Math.min.apply(null, infimumOptions.map(function (entry) {
+        return entry.value;
+    }));
 
-    /*
-     Das offene Intervall enthält die Sprungstelle. Das
-     Supremum 0 wird nicht angenommen. Der Wert -1 ist genau
-     dann ein Minimum, wenn links davon keine kleineren Werte
-     vorkommen beziehungsweise angenähert werden.
-    */
+    const supremum = Math.max.apply(null, supremumOptions.map(function (entry) {
+        return entry.value;
+    }));
 
     return {
-        min: a >= -1
-            ? { x: 0, y: -1 }
-            : null,
-        max: null
+        min: attainedPoint(infimumOptions, infimum),
+        max: attainedPoint(supremumOptions, supremum)
     };
 
 }
@@ -760,214 +935,67 @@ function determineJumpExtrema(a, b, closed) {
    Globale Extremwerte bestimmen
    ========================================================= */
 
-function determineGlobalExtrema(a, b, closed) {
+function limitAtInfinity(direction) {
 
-    const eps = 1e-9;
+    if (currentFuncId === 'abs') return Infinity;
+    return direction < 0 ? -Infinity : Infinity;
 
+}
+
+
+function determineGlobalExtrema(domain) {
 
     if (currentFuncId === 'jump') {
-
-        return determineJumpExtrema(a, b, closed);
-
+        return determineJumpExtrema(domain);
     }
 
-    const critical = criticalPoints();
+    const candidates = [];
 
-
-
-    /* -----------------------------------------------------
-       Geschlossenes Intervall
-       ----------------------------------------------------- */
-
-    if (closed) {
-
-        const candidates = [
-
-            {
-                x: a,
-                y: f(a)
-            },
-
-            {
-                x: b,
-                y: f(b)
-            }
-
-        ];
-
-
-
-        critical.forEach(function (x) {
-
-            if (x >= a - eps && x <= b + eps) {
-
-                candidates.push({
-
-                    x: x,
-                    y: f(x)
-
-                });
-
-            }
-
+    if (domain.leftInfinite) {
+        candidates.push({ y: limitAtInfinity(-1), attained: false });
+    } else {
+        candidates.push({
+            x: domain.a,
+            y: f(domain.a),
+            attained: domain.includeA
         });
-
-
-
-        let min = candidates[0];
-        let max = candidates[0];
-
-
-
-        candidates.forEach(function (p) {
-
-            if (p.y < min.y) {
-
-                min = p;
-
-            }
-
-
-            if (p.y > max.y) {
-
-                max = p;
-
-            }
-
-        });
-
-
-
-        return {
-
-            min: min,
-            max: max
-
-        };
-
     }
 
-
-
-    /* -----------------------------------------------------
-       Offenes Intervall
-
-       Die Randwerte f(a), f(b) werden nicht angenommen.
-       Sie bestimmen aber mögliche Infima/Suprema.
-       ----------------------------------------------------- */
-
-    const interiorCandidates = [];
-
-
-
-    critical.forEach(function (x) {
-
-        if (x > a + eps && x < b - eps) {
-
-            interiorCandidates.push({
-
-                x: x,
-                y: f(x)
-
-            });
-
-        }
-
-    });
-
-
-
-    const comparisonValues = [
-
-        {
-            x: a,
-            y: f(a),
-            attained: false
-        },
-
-        {
-            x: b,
-            y: f(b),
-            attained: false
-        }
-
-    ];
-
-
-
-    interiorCandidates.forEach(function (p) {
-
-        comparisonValues.push({
-
-            x: p.x,
-            y: p.y,
-            attained: true
-
+    if (domain.rightInfinite) {
+        candidates.push({ y: limitAtInfinity(1), attained: false });
+    } else {
+        candidates.push({
+            x: domain.b,
+            y: f(domain.b),
+            attained: domain.includeB
         });
+    }
 
+    criticalPoints().forEach(function (x) {
+        if (domainContains(domain, x)) {
+            candidates.push({ x: x, y: f(x), attained: true });
+        }
     });
 
+    const infimum = Math.min.apply(null, candidates.map(function (entry) {
+        return entry.y;
+    }));
 
+    const supremum = Math.max.apply(null, candidates.map(function (entry) {
+        return entry.y;
+    }));
 
-    let infimum = comparisonValues[0].y;
-    let supremum = comparisonValues[0].y;
-
-
-
-    comparisonValues.forEach(function (p) {
-
-        if (p.y < infimum) {
-
-            infimum = p.y;
-
-        }
-
-
-        if (p.y > supremum) {
-
-            supremum = p.y;
-
-        }
-
+    const minCandidate = candidates.find(function (entry) {
+        return entry.attained && sameValue(entry.y, infimum);
     });
 
-
-
-    let min = null;
-    let max = null;
-
-
-
-    interiorCandidates.forEach(function (p) {
-
-        if (
-            min === null &&
-            Math.abs(p.y - infimum) < eps
-        ) {
-
-            min = p;
-
-        }
-
-
-        if (
-            max === null &&
-            Math.abs(p.y - supremum) < eps
-        ) {
-
-            max = p;
-
-        }
-
+    const maxCandidate = candidates.find(function (entry) {
+        return entry.attained && sameValue(entry.y, supremum);
     });
-
-
 
     return {
-
-        min: min,
-        max: max
-
+        min: minCandidate ? { x: minCandidate.x, y: minCandidate.y } : null,
+        max: maxCandidate ? { x: maxCandidate.x, y: maxCandidate.y } : null
     };
 
 }
@@ -1018,36 +1046,40 @@ function updateScene() {
        a und b bestimmen
        ----------------------------------------------------- */
 
-    let a = aPoint.X();
-    let b = bPoint.X();
+    const a = aPoint.X();
+    const b = bPoint.X();
 
-
-
-    if (a > b) {
-
-        const tmp = a;
-
-        a = b;
-        b = tmp;
-
-    }
-
-
+    const leftInfinite = leftInfiniteCheckbox.Value();
+    const rightInfinite = rightInfiniteCheckbox.Value();
 
     /*
-     Falls die Punkte praktisch aufeinander liegen,
-     kleines positives Intervall verwenden.
+     Inclusion is meaningful only for a finite boundary. An inactive
+     checkbox is displayed unchecked and greyed out; its previous value
+     is restored when the boundary becomes finite again.
     */
+    synchroniseInclusionCheckbox(
+        leftInfinite,
+        includeACheckbox,
+        leftInclusionState
+    );
 
-    if (Math.abs(a - b) < 0.001) {
+    synchroniseInclusionCheckbox(
+        rightInfinite,
+        includeBCheckbox,
+        rightInclusionState
+    );
 
-        b = a + 0.001;
+    aPoint.setAttribute({ visible: !leftInfinite });
+    bPoint.setAttribute({ visible: !rightInfinite });
 
-    }
-
-
-
-    const closed = closedCheckbox.Value();
+    const domain = {
+        a: a,
+        b: b,
+        leftInfinite: leftInfinite,
+        rightInfinite: rightInfinite,
+        includeA: !leftInfinite && includeACheckbox.Value(),
+        includeB: !rightInfinite && includeBCheckbox.Value()
+    };
 
 
 
@@ -1113,6 +1145,8 @@ function updateScene() {
        Linker grauer Bereich
        ===================================================== */
 
+    if (!leftInfinite) {
+
     leftShade = board.create('polygon', [
 
         [xmin, ymin],
@@ -1150,11 +1184,15 @@ function updateScene() {
 
     });
 
+    }
+
 
 
     /* =====================================================
        Rechter grauer Bereich
        ===================================================== */
+
+    if (!rightInfinite) {
 
     rightShade = board.create('polygon', [
 
@@ -1192,6 +1230,8 @@ function updateScene() {
         }
 
     });
+
+    }
 
 
 
@@ -1303,6 +1343,8 @@ function updateScene() {
        Gestrichelte Linie bei x=a
        ===================================================== */
 
+    if (!leftInfinite) {
+
     leftLine = board.create('segment', [
 
         [a, ymin],
@@ -1337,11 +1379,15 @@ function updateScene() {
 
     });
 
+    }
+
 
 
     /* =====================================================
        Gestrichelte Linie bei x=b
        ===================================================== */
+
+    if (!rightInfinite) {
 
     rightLine = board.create('segment', [
 
@@ -1376,6 +1422,8 @@ function updateScene() {
         }
 
     });
+
+    }
 
 
 
@@ -1423,33 +1471,31 @@ function updateScene() {
 
 
 
-    leftEndpoint = board.create('point', [
+    if (!leftInfinite) {
 
-        a,
-        f(a)
+        leftEndpoint = board.create('point', [
+            a,
+            f(a)
+        ], domain.includeA ? closedEndpointStyle : openEndpointStyle);
 
-    ],
-
-        closed
-            ? closedEndpointStyle
-            : openEndpointStyle
-
-    );
+    }
 
 
+    if (!rightInfinite) {
 
-    rightEndpoint = board.create('point', [
+        const rightEndpointY =
+            currentFuncId === 'jump' &&
+            Math.abs(b) < 1e-9 &&
+            !domain.includeB
+                ? 0
+                : f(b);
 
-        b,
-        f(b)
+        rightEndpoint = board.create('point', [
+            b,
+            rightEndpointY
+        ], domain.includeB ? closedEndpointStyle : openEndpointStyle);
 
-    ],
-
-        closed
-            ? closedEndpointStyle
-            : openEndpointStyle
-
-    );
+    }
 
 
 
@@ -1457,17 +1503,11 @@ function updateScene() {
        Globale Extremwerte
        ===================================================== */
 
-    const extrema = determineGlobalExtrema(
+    const extrema = determineGlobalExtrema(domain);
 
-        a,
-        b,
-        closed
-
-    );
-
-
-    const continuousOnInterval =
-        isContinuousOnInterval(a, b, closed);
+    const continuousOnDomain = isContinuousOnDomain(domain);
+    const closedDomain = domainIsClosed(domain);
+    const boundedDomain = domainIsBounded(domain);
 
 
 
@@ -1554,73 +1594,75 @@ function updateScene() {
 
 
 
-    const interval = closed
-        ? `$[${a.toFixed(2)}, ${b.toFixed(2)}]$`
-        : `$(${a.toFixed(2)}, ${b.toFixed(2)})$`;
-
-
+    const domainText = formatDomain(domain);
+    const yesNo = function (value) { return value ? 'yes' : 'no'; };
 
     let html = `
 
         <p>
             <strong>Current settings</strong><br>
             Function: ${describeFunction(currentFuncId)}<br>
-            Interval: ${interval}
+            Domain: ${domainText}
+        </p>
+
+        <p>
+            <strong>Properties relevant to the theorem</strong><br>
+            $f$ continuous on the domain: <strong>${yesNo(continuousOnDomain)}</strong><br>
+            Domain closed: <strong>${yesNo(closedDomain)}</strong><br>
+            Domain bounded: <strong>${yesNo(boundedDomain)}</strong>
         </p>
 
     `;
 
-
-
-    if (closed && continuousOnInterval) {
+    if (continuousOnDomain && closedDomain && boundedDomain) {
 
         html += `
 
-            <p style="margin-bottom: 0;">
-                <strong>Extreme Value Theorem:</strong><br>
-                The function $f$ is continuous on the interval under
-                consideration, and the interval is
-                <strong>closed and bounded</strong>. Therefore, $f$ has at least
-                one global minimum and one global maximum on this interval.
+            <p>
+                <strong>Applying the Extreme Value Theorem:</strong><br>
+                The function $f$ is continuous on a closed and bounded domain.
+                Therefore, $f$ attains both a global minimum and a global maximum.
+                <br><br>${describeExtremaExistence(extrema)}
+            </p>
+
+        `;
+
+    } else {
+
+        const missingAssumptions = [];
+
+        if (!continuousOnDomain) {
+            missingAssumptions.push('$f$ is not continuous on the selected domain');
+        }
+        if (!closedDomain) {
+            missingAssumptions.push('the domain is not closed');
+        }
+        if (!boundedDomain) {
+            missingAssumptions.push('the domain is not bounded');
+        }
+
+        html += `
+
+            <p>
+                <strong>The theorem does not apply:</strong><br>
+                ${missingAssumptions.join('; ')}. This does not rule out global
+                extrema; their existence is simply not guaranteed.
+                <br><br>${describeExtremaExistence(extrema)}
             </p>
 
         `;
 
     }
 
-    else if (closed) {
+    if (currentFuncId === 'abs' && domainContains(domain, 1)) {
 
         html += `
-
             <p style="margin-bottom: 0;">
-                <strong>Note:</strong><br>
-                The interval is closed and bounded, but $f$ is not continuous
-                at $x=0$. Therefore, the Extreme Value Theorem does not apply.
-                The function values approach $0$ from the left without ever
-                attaining it. Hence, no global maximum exists.<br><br>
-                ${describeExtremaExistence(extrema)}
+                <strong>Continuity versus differentiability:</strong><br>
+                Although $f(x)=|x-1|$ is not differentiable at $x=1$, it is
+                continuous there. Differentiability is not an assumption of the
+                Extreme Value Theorem.
             </p>
-
-        `;
-
-    }
-
-    else {
-
-        const continuityWarning = continuousOnInterval
-            ? ''
-            : ' In addition, $f$ is not continuous at $x=0$.';
-
-        html += `
-
-            <p style="margin-bottom: 0;">
-                <strong>Note:</strong><br>
-                The interval is not closed. Therefore, the Extreme Value Theorem
-                does not apply.${continuityWarning} This does not rule out global
-                extrema; their existence is simply not guaranteed.<br><br>
-                ${describeExtremaExistence(extrema)}
-            </p>
-
         `;
 
     }
@@ -1675,45 +1717,45 @@ function updateScene() {
 
 aPoint.on(
     'drag',
-    updateScene
+    function () {
+        if (aPoint.X() > bPoint.X() - 0.1) {
+            aPoint.setPosition(JXG.COORDS_BY_USER, [bPoint.X() - 0.1, 0]);
+        }
+        updateScene();
+    }
 );
 
 bPoint.on(
     'drag',
-    updateScene
+    function () {
+        if (bPoint.X() < aPoint.X() + 0.1) {
+            bPoint.setPosition(JXG.COORDS_BY_USER, [aPoint.X() + 0.1, 0]);
+        }
+        updateScene();
+    }
 );
 
 
 
 /* ---------------------------------------------------------
-   JSXGraph Checkbox geändert
-
-   Dadurch werden sofort
-
-   [a,b] <-> (a,b),
-
-   die Randpunkte,
-
-   die globalen Extrema
-
-   und der Erklärungstext aktualisiert.
+   Update immediately after changing any domain control.
    --------------------------------------------------------- */
 
-JXG.addEvent(
+[
+    leftInfiniteCheckbox,
+    rightInfiniteCheckbox,
+    includeACheckbox,
+    includeBCheckbox
+].forEach(function (checkbox) {
 
-    closedCheckbox.rendNodeCheckbox,
+    JXG.addEvent(
+        checkbox.rendNodeCheckbox,
+        'change',
+        updateScene,
+        checkbox
+    );
 
-    'change',
-
-    function () {
-
-        updateScene();
-
-    },
-
-    closedCheckbox
-
-);
+});
 
 
 
